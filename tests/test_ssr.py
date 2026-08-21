@@ -48,3 +48,36 @@ def test_init_ssr_is_one_model_html_and_api(tmp_path):
     css = (dest / "static" / "style.css").read_text(encoding="utf-8")
     assert "#c2410c" in css
     assert "Georgia" not in css
+
+
+def test_init_app_wizard_is_not_harbor(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(
+        cli,
+        [
+            "init",
+            "app",
+            "--title",
+            "Luna Cameras",
+            "--about",
+            "We rent cameras and lights to film students.",
+            "--noun",
+            "kits",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    dest = tmp_path / "luna-cameras"
+    assert dest.is_dir()
+    main = (dest / "app" / "main.py").read_text(encoding="utf-8")
+    db = (dest / "app" / "db.py").read_text(encoding="utf-8")
+    models = (dest / "app" / "models.py").read_text(encoding="utf-8")
+    index = (dest / "templates" / "index.html").read_text(encoding="utf-8")
+    readme = (dest / "README.md").read_text(encoding="utf-8")
+    assert "class Kit(" in models
+    assert "Kit" in main
+    assert "Harbor" not in main + readme + index
+    assert "Bindings" not in readme
+    assert "Add kit" in index
+    assert "film students" in readme
+    assert db.count("Kit(") >= 10
+    assert "Camera" in db or "light" in db.lower() or "Interview" in db

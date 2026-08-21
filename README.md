@@ -45,8 +45,8 @@ PowerShell does not expand `pyron-*.whl` for pip; use `Get-ChildItem` or the exa
 ## 30 seconds (pages + API + admin)
 
 ```bash
-pyron init shop          # default: HTML form, /docs, /admin
-cd shop
+pyron init app           # asks name + what it is about; 10 starter records
+cd <folder>
 pyron dev
 ```
 
@@ -133,4 +133,4 @@ cargo test --lib
 
 ## Status
 
-v0.7.0. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).
+v0.7.1. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).

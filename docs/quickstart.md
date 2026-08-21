@@ -3,6 +3,12 @@
 The default is a **page with a form**, not an API-only file. FastAPI leaves HTML, forms, and a panel as homework; `pyron init` does not.
 
 ```bash
+pyron init app
+```
+
+It asks the project name, what it is about, and what people add (dishes, kits, classes…). You get a unique app: home form, `/docs`, `/admin`, and **10 starter records** for that topic — not a copy of the bookstore example.
+
+```bash
 pyron init shop
 cd shop
 pyron dev

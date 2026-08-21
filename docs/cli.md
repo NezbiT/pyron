@@ -1,7 +1,9 @@
 # CLI
 
 ```
+pyron init app                  # wizard: name, about, noun → 10 records
 pyron init NAME --template api|ssr|desk|fullstack
+pyron init app --title "…" --about "…" --noun kits
 pyron startapp NAME
 pyron enable admin          # also: app.enable("mongo"|"redis") in code
 pyron check [--deploy]

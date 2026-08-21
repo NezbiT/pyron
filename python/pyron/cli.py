@@ -44,28 +44,53 @@ def version() -> None:
 
 @app.command("init")
 def init_project(
-    name: str = typer.Argument(..., help="Directory (and package) name for the new app."),
+    name: Optional[str] = typer.Argument(
+        None,
+        help="Folder name. Use 'app' (or omit) to answer: project name, what it is about, what people add.",
+    ),
     template: str = typer.Option(
         "ssr",
         "--template",
         "-t",
         help="Project shape: api | ssr | desk | fullstack.",
     ),
+    title: Optional[str] = typer.Option(None, "--title", help="Project title (skips that prompt)."),
+    about: Optional[str] = typer.Option(None, "--about", help="What the app is for (one or two sentences)."),
+    noun: Optional[str] = typer.Option(None, "--noun", help="What people add, e.g. dishes, kits, classes."),
     force: bool = typer.Option(False, "--force", help="Overwrite the target directory if it exists."),
 ) -> None:
-    """Scaffold a new Pyron application."""
+    """Create a new app. `pyron init app` asks questions and seeds 10 records."""
+    from pyron.scaffold import Brief, seed_items, slugify, write_app
+
     if template not in TEMPLATES:
         raise typer.BadParameter(f"template must be one of {TEMPLATES}")
     label = template
     if template == "desk":
         template = "ssr"
-    dest = Path(name).resolve()
+    wizard = name is None or name.strip().lower() == "app"
+    if wizard:
+        title = (title or typer.prompt("Project name")).strip()
+        about = (about or typer.prompt("What is it about")).strip()
+        noun = (noun or typer.prompt("What do people add (one word)", default="items")).strip() or "items"
+        dest = Path(slugify(title)).resolve()
+    else:
+        dest = Path(name).resolve()
+        title = (title or dest.name.replace("-", " ").replace("_", " ")).strip()
+        about = (about or f"A {title} app.").strip()
+        noun = (noun or "items").strip() or "items"
+    if not title:
+        console.print("[red]A project name is required.[/red]")
+        raise typer.Exit(1)
+    brief = Brief(title=title, about=about, noun=noun, folder=dest.name)
     if dest.exists() and any(dest.iterdir()) and not force:
         console.print(f"[red]{dest} is not empty.[/red] Pass --force to overwrite.")
         raise typer.Exit(1)
-    dest.mkdir(parents=True, exist_ok=True)
-    _write_scaffold(dest, dest.name.replace("-", "_"), template)
+    write_app(dest, brief, template=template)
+    seeds = seed_items(brief)
     table = Table(title=f"Created {dest.name}", show_header=False, box=None)
+    table.add_row("title", brief.title)
+    table.add_row("about", brief.about)
+    table.add_row(brief.plural, f"{len(seeds)} starter records")
     table.add_row("template", label)
     table.add_row("core", CORE)
     console.print(table)
@@ -77,10 +102,10 @@ def init_project(
             f"  pyron dev\n"
             f"{extra}\n"
             "Then:\n"
-            "  http://127.0.0.1:8000        pages (HTML form)\n"
+            "  http://127.0.0.1:8000        pages (HTML form + 10 records)\n"
             "  http://127.0.0.1:8000/docs   API\n"
-            + ("  http://127.0.0.1:8000/admin  panel (first visit creates root)\n" if label in {"ssr", "desk"} else ""),
-            title="Pyron",
+            + ("  http://127.0.0.1:8000/admin  panel (first visit creates root)\n" if label in {"ssr", "desk", "app"} else ""),
+            title=brief.title,
             border_style="red",
         )
     )

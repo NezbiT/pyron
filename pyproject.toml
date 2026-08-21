@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pyron"
-version = "0.7.0"
+version = "0.7.1"
 description = "Hybrid Python web framework with a Rust core — routing, validation, and serialization on the hot path."
 readme = "README.md"
 requires-python = ">=3.10"
