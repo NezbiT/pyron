@@ -2,7 +2,7 @@
 
 How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
-Every user-facing change must update this file **and** the matching `docs/*.md` (plus README / scaffold copy when that surface is listed there). See `AGENTS.md`.
+A user-facing change is unfinished until this file **and** the matching `docs/*.md` are updated in the same commit (plus README / scaffold copy when that surface is listed there). See `AGENTS.md` and [Contributing](docs/contributing.md).
 
 ## 0.9.0 — 2026-08-21
 
@@ -12,7 +12,7 @@ Operate the site from the admin panel, not only the SQL tables.
 - **Settings**: name, tagline, phone, email, hours, address, website. Public header/footer read `site`.
 - **Pages** body is Markdown, with a live preview. Legacy HTML bodies still render. Jinja in the body stays text.
 - Phone in the public footer is a `tel:` link.
-- Docs: [Settings](docs/admin.md#settings), CLI, comparison, enable, security, architecture, README, example bookstore.
+- Docs: [Settings](docs/admin.md#settings), CLI, comparison, enable, security, architecture, README, example bookstore. Docs ship in the same commit as the feature ([Contributing](docs/contributing.md)).
 
 ## 0.8.0 — 2026-08-21
 
