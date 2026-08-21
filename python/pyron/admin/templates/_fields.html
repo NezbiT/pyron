@@ -1,0 +1,27 @@
+{% macro desk_input(f, input_name) %}
+  {% if f.widget == "checkbox" %}
+    <div class="field check">
+      <input id="{{ input_name }}" name="{{ input_name }}" type="checkbox" value="1" {% if f.checked %}checked{% endif %} {% if f.readonly %}disabled{% endif %}/>
+      <label for="{{ input_name }}">{{ f.label }}</label>
+    </div>
+  {% elif f.widget == "textarea" %}
+    <div class="field">
+      <label for="{{ input_name }}">{{ f.label }}</label>
+      <textarea id="{{ input_name }}" name="{{ input_name }}" rows="5" {% if f.required %}required{% endif %} {% if f.readonly %}readonly{% endif %}>{{ f.value }}</textarea>
+      {% if f.help %}<p class="hint">{{ f.help }}</p>{% endif %}
+    </div>
+  {% else %}
+    <div class="field">
+      <label for="{{ input_name }}">{{ f.label }}</label>
+      <input
+        id="{{ input_name }}"
+        name="{{ input_name }}"
+        value="{{ f.value }}"
+        {% if f.widget == "number" %}type="number" step="any"{% elif f.widget == "datetime" %}type="datetime-local"{% elif f.widget == "date" %}type="date"{% elif f.widget == "password" %}type="password"{% else %}type="text"{% endif %}
+        {% if f.required %}required{% endif %}
+        {% if f.readonly %}readonly{% endif %}
+      />
+      {% if f.help %}<p class="hint">{{ f.help }}</p>{% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}

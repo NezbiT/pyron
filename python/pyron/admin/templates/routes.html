@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ t('routes') }}{% endblock %}
+{% block crumb %}{{ t('routes') }}{% endblock %}
+{% block content %}
+  <h1>{{ t('routes') }}</h1>
+  <p class="lede">{{ t('routes_lede') }}</p>
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ t('method') }}</th>
+            <th>{{ t('path') }}</th>
+            <th>{{ t('name') }}</th>
+            <th>{{ t('tags') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr class="{% if row.admin %}is-desk{% endif %}">
+              <td><code>{{ row.methods }}</code></td>
+              <td><code>{{ row.path }}</code></td>
+              <td>{{ row.name }}</td>
+              <td>{{ row.tags }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>{{ t('no_routes') }}</p>
+    </div>
+  {% endif %}
+{% endblock %}

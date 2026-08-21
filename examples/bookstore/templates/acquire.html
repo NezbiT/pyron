@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Sell a book — Harbor Bindings{% endblock %}
+{% block content %}
+  <h1>Sell us a book</h1>
+  <p class="lede">We buy what we can resell. Title and author are required; price can be zero if you just want it off your porch.</p>
+
+  {% if error %}
+    <div class="banner" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/acquire" novalidate>
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" name="title" value="{{ form.title }}" required maxlength="200" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label for="author">Author</label>
+      <input id="author" name="author" value="{{ form.author }}" required maxlength="160" autocomplete="name"/>
+    </div>
+    <div class="field">
+      <label for="price">Asking price (USD)</label>
+      <input id="price" name="price" inputmode="decimal" value="{{ form.price }}" placeholder="0.00"/>
+      <p class="hint">Use a number. We will talk you down in person, not here.</p>
+    </div>
+    <div class="field">
+      <label for="year">Year published</label>
+      <input id="year" name="year" inputmode="numeric" value="{{ form.year }}" placeholder="optional"/>
+    </div>
+    <div class="field">
+      <label for="description">Condition notes</label>
+      <textarea id="description" name="description" rows="4">{{ form.description }}</textarea>
+    </div>
+    <button class="btn" type="submit">Offer this book</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ bound.plural }}{% endblock %}
+{% block crumb %}{{ bound.plural }}{% endblock %}
+{% block content %}
+  <div class="row-head">
+    <div>
+      <h1>{{ bound.plural }}</h1>
+      <p class="lede">{% if total == 1 %}{{ t('n_record_one', n=total) }}{% else %}{{ t('n_records', n=total) }}{% endif %}{% if q %} {{ t('matching', q=q) }}{% endif %}.</p>
+    </div>
+    {% if can_add %}
+      <a class="btn" href="{{ prefix }}/m/{{ bound.slug }}/new">{{ t('add_model', name=bound.name) }}</a>
+    {% endif %}
+  </div>
+
+  {% if bound.admin.search_fields %}
+    <form class="search" method="get" action="{{ prefix }}/m/{{ bound.slug }}" role="search">
+      <label class="sr" for="q">{{ t('search_label', name=bound.plural) }}</label>
+      <input id="q" name="q" type="search" value="{{ q }}" placeholder="{{ bound.admin.search_fields|join(', ') }}"/>
+      {% for name, val in active_filters.items() %}
+        <input type="hidden" name="f_{{ name }}" value="{{ val }}"/>
+      {% endfor %}
+      <button class="btn" type="submit">{{ t('search') }}</button>
+    </form>
+  {% endif %}
+
+  {% if filter_specs %}
+    <div class="filters">
+      {% for spec in filter_specs %}
+        <div class="filter">
+          <span class="filter-label">{{ spec.label }}</span>
+          {% for choice in spec.choices %}
+            <a class="chip{% if (active_filters.get(spec.name) or 'all') == choice.value %} is-on{% endif %}"
+               href="{{ prefix }}/m/{{ bound.slug }}{% if choice.qs %}?{{ choice.qs }}{% endif %}">{% if choice.label in ['all','yes','no'] %}{{ t(choice.label) }}{% else %}{{ choice.label }}{% endif %}</a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if records %}
+    <form method="post" action="{{ prefix }}/m/{{ bound.slug }}/action">
+      <input type="hidden" name="csrf" value="{{ csrf }}"/>
+      <div class="table-wrap table-overflow">
+        <table>
+          <thead>
+            <tr>
+              {% if can_delete %}<th class="check-col"><span class="sr">{{ t('select') }}</span></th>{% endif %}
+              {% for h in headers %}<th>{{ h }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec in records %}
+              <tr>
+                {% if can_delete %}
+                  <td class="check-col"><input type="checkbox" name="pk" value="{{ rec.pk }}" id="pk-{{ rec.pk }}"/><label class="sr" for="pk-{{ rec.pk }}">{{ rec.pk }}</label></td>
+                {% endif %}
+                {% for cell in rec.cells %}
+                  <td>
+                    {% if loop.first %}
+                      <a href="{{ prefix }}/m/{{ bound.slug }}/{{ rec.pk }}">{{ cell }}</a>
+                    {% else %}
+                      {{ cell }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if can_delete %}
+        <div class="bulk-bar">
+          <label class="sr" for="action">{{ t('bulk_action') }}</label>
+          <select id="action" name="action">
+            <option value="">{{ t('bulk_choose') }}</option>
+            <option value="delete_selected">{{ t('bulk_delete') }}</option>
+          </select>
+          <button class="btn secondary" type="submit">{{ t('bulk_go') }}</button>
+        </div>
+      {% endif %}
+    </form>
+    {% if pages > 1 %}
+      <nav class="pager" aria-label="{{ t('page_of', page=page, pages=pages) }}">
+        {% if page > 1 %}
+          <a href="?{{ prev_qs }}">{{ t('previous') }}</a>
+        {% endif %}
+        <span>{{ t('page_of', page=page, pages=pages) }}</span>
+        {% if page < pages %}
+          <a href="?{{ next_qs }}">{{ t('next') }}</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  {% elif q or active_filters %}
+    <div class="empty">
+      {% if q %}
+        <p>{{ t('empty_search', name=bound.plural, q=q) }}</p>
+      {% else %}
+        <p>{{ t('empty_filters', name=bound.plural) }}</p>
+      {% endif %}
+      <p><a href="{{ prefix }}/m/{{ bound.slug }}">{{ t('clear_search') }}</a></p>
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>{{ t('empty_table', name=bound.plural) }}</p>
+      {% if can_add %}
+        <p><a href="{{ prefix }}/m/{{ bound.slug }}/new">{{ t('add_first', name=bound.name) }}</a></p>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

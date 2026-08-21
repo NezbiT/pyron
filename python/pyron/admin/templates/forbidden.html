@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t('not_allowed') }}{% endblock %}
+{% block content %}
+  <h1>{{ t('not_allowed') }}</h1>
+  <p class="lede">{{ message }}</p>
+  {% if next_step %}
+    <p>{{ next_step }}</p>
+  {% endif %}
+  {% if permission %}
+    <p class="meta"><code>{{ permission }}</code></p>
+  {% endif %}
+  <p><a class="btn" href="{{ prefix }}/">{{ t('back_desk') }}</a></p>
+{% endblock %}

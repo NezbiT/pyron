@@ -1,0 +1,109 @@
+site_name: Pyron
+site_description: Hybrid Python web framework — FastAPI to write, Django to operate, Rust on the hot path.
+site_url: https://nezbit.github.io/pyron/
+repo_url: https://github.com/NezbiT/pyron
+repo_name: NezbiT/pyron
+edit_uri: edit/main/docs/
+copyright: MIT · Pyron
+docs_dir: docs
+site_dir: site
+dev_addr: 127.0.0.1:8001
+
+theme:
+  name: material
+  custom_dir: overrides
+  language: en
+  font:
+    text: IBM Plex Sans
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Follow the system
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Light
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Dark
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.follow
+  icon:
+    logo: material/fire
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang: en
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/NezbiT/pyron
+      name: Source
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      check_paths: true
+      base_path:
+        - .
+        - docs
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Start:
+      - Install: install.md
+      - Quickstart: quickstart.md
+      - Enable later: enable.md
+  - Build:
+      - API: api.md
+      - Admin panel: admin.md
+      - Auth: auth.md
+      - Data (SQL, Mongo, Redis): data.md
+      - CLI: cli.md
+      - Security: security.md
+  - Understand:
+      - Architecture: architecture.md
+      - Comparison: comparison.md
+      - Changelog: changelog.md

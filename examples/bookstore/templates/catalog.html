@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Catalog — Harbor Bindings{% endblock %}
+{% block content %}
+  <h1>Catalog</h1>
+  <form class="search" method="get" action="/catalog" role="search">
+    <label class="visually-hidden" for="q" style="position:absolute;left:-999px">Search title or author</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Title or author" autocomplete="off"/>
+    <button class="btn" type="submit">Search catalog</button>
+  </form>
+
+  {% if books %}
+    <p class="meta">{{ books|length }} title{% if books|length != 1 %}s{% endif %}{% if q %} matching “{{ q }}”{% endif %}.</p>
+    <div class="grid">
+      {% for book in books %}
+        <a class="card" href="/books/{{ book.id }}">
+          <h2>{{ book.title }}</h2>
+          <p class="by">{{ book.author }}</p>
+          <p class="price">${{ '%.2f'|format(book.price) }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% elif q %}
+    <div class="empty">
+      <p>Nothing on the shelves matches “{{ q }}”.</p>
+      <p>Try a shorter word, or <a href="/catalog">clear the search</a> and browse.</p>
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>The catalog has no titles yet.</p>
+      <p><a href="/acquire">Sell us a book</a> — title and author are enough to start.</p>
+    </div>
+  {% endif %}
+{% endblock %}

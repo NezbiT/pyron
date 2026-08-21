@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ t('desk') }}{% endblock %}
+{% block crumb %}{{ t('desk') }}{% endblock %}
+{% block content %}
+  <h1>{{ t('desk') }}</h1>
+  <p class="lede">{{ t('desk_lede') }}</p>
+
+  <ul class="stats">
+    <li>{{ t('n_tables', n=cards|length) }}</li>
+    <li>{{ t('n_routes', n=route_count) }}</li>
+    <li>{% if user_count == 1 %}{{ t('n_operator_one', n=user_count) }}{% else %}{{ t('n_operators', n=user_count) }}{% endif %}</li>
+  </ul>
+
+  <h2>{{ t('tables') }}</h2>
+  {% if cards %}
+    <div class="grid">
+      {% for card in cards %}
+        <a class="tile" href="{{ prefix }}/m/{{ card.bound.slug }}">
+          <h3>{{ card.bound.plural }}</h3>
+          <p class="count">{% if card.count == 1 %}{{ t('n_record_one', n=card.count) }}{% else %}{{ t('n_records', n=card.count) }}{% endif %}</p>
+          <p class="kind">{{ card.bound.kind }}</p>
+          <p class="go">{{ t('open_table', name=card.bound.plural) }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>{{ t('no_tables') }}</p>
+      <p>{{ t('no_tables_hint') }}</p>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% set here = request.url.path if request else prefix + "/" %}
+{% set lang_ns = namespace(i=0) %}
+{% for code in locales %}
+  {% if locale == code %}{% set lang_ns.i = loop.index0 %}{% endif %}
+{% endfor %}
+{% set theme_i = 0 if theme == 'system' else (1 if theme == 'light' else 2) %}
+<div class="prefs">
+  <form class="toggle-form" method="get" action="{{ prefix }}/prefs">
+    <input type="hidden" name="next" value="{{ here }}"/>
+    <p class="nav-label" id="pref-lang-label">{{ t('language') }}</p>
+    <div class="toggle" role="radiogroup" aria-labelledby="pref-lang-label" style="--n: {{ locales|length }}; --i: {{ lang_ns.i }}">
+      <span class="toggle-thumb" aria-hidden="true"></span>
+      {% for code in locales %}
+        <button
+          type="submit"
+          name="lang"
+          value="{{ code }}"
+          class="toggle-btn{% if locale == code %} is-on{% endif %}"
+          role="radio"
+          aria-checked="{% if locale == code %}true{% else %}false{% endif %}"
+          aria-label="{{ locale_labels[code] }}"
+          title="{{ locale_labels[code] }}"
+          data-pref="lang"
+          data-value="{{ code }}"
+        >{{ code|upper }}</button>
+      {% endfor %}
+    </div>
+  </form>
+  <form class="toggle-form" method="get" action="{{ prefix }}/prefs">
+    <input type="hidden" name="next" value="{{ here }}"/>
+    <p class="nav-label" id="pref-theme-label">{{ t('theme') }}</p>
+    <div class="toggle" role="radiogroup" aria-labelledby="pref-theme-label" style="--n: 3; --i: {{ theme_i }}">
+      <span class="toggle-thumb" aria-hidden="true"></span>
+      <button type="submit" name="theme" value="system" class="toggle-btn{% if theme == 'system' %} is-on{% endif %}" role="radio" aria-checked="{% if theme == 'system' %}true{% else %}false{% endif %}" data-pref="theme" data-value="system">{{ t('theme_system') }}</button>
+      <button type="submit" name="theme" value="light" class="toggle-btn{% if theme == 'light' %} is-on{% endif %}" role="radio" aria-checked="{% if theme == 'light' %}true{% else %}false{% endif %}" data-pref="theme" data-value="light">{{ t('theme_light') }}</button>
+      <button type="submit" name="theme" value="dark" class="toggle-btn{% if theme == 'dark' %} is-on{% endif %}" role="radio" aria-checked="{% if theme == 'dark' %}true{% else %}false{% endif %}" data-pref="theme" data-value="dark">{{ t('theme_dark') }}</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ t('users') }}{% endblock %}
+{% block crumb %}{{ t('users') }}{% endblock %}
+{% block content %}
+  <div class="row-head">
+    <div>
+      <h1>{{ t('users') }}</h1>
+      <p class="lede">{{ t('users_lede') }}</p>
+    </div>
+    <a class="btn" href="{{ prefix }}/users/new">{{ t('create_operator') }}</a>
+  </div>
+  {% if people %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ t('username') }}</th>
+            <th>{{ t('role') }}</th>
+            <th>{{ t('status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in people %}
+            <tr>
+              <td><a href="{{ prefix }}/users/{{ p.id }}">{{ p.username }}</a></td>
+              <td>{% if p.is_root %}{{ t('role_root') }}{% else %}{{ t('role_staff') }}{% endif %}</td>
+              <td>{% if p.is_active %}{{ t('active') }}{% else %}{{ t('deactivated') }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>{{ t('n_operators', n=0) }}</p>
+    </div>
+  {% endif %}
+{% endblock %}

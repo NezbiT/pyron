@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ t('bulk_delete') }}{% endblock %}
+{% block crumb %}<a href="{{ prefix }}/m/{{ bound.slug }}">{{ bound.plural }}</a> / {{ t('bulk_delete') }}{% endblock %}
+{% block content %}
+  <h1>{{ t('bulk_delete_title', n=labels|length, name=bound.plural) }}</h1>
+  <p class="lede">{{ t('delete_lede') }}</p>
+  {% if error %}
+    <p class="banner" role="alert">{{ error }}</p>
+  {% endif %}
+  {% if labels %}
+    <ul class="bulk-list">
+      {% for label in labels %}
+        <li>{{ label }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}"/>
+    <div class="actions">
+      <a class="btn" href="{{ prefix }}/m/{{ bound.slug }}">{{ t('bulk_keep') }}</a>
+      <button class="btn danger" type="submit">{{ t('bulk_delete_confirm', n=labels|length) }}</button>
+    </div>
+  </form>
+{% endblock %}

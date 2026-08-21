@@ -1,0 +1,103 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pyron"
+version = "0.6.2"
+description = "Hybrid Python web framework with a Rust core — routing, validation, and serialization on the hot path."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Pyron Contributors" }]
+keywords = ["web", "asgi", "fastapi", "rust", "validation", "openapi", "ssr"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+dependencies = [
+    "starlette>=0.38",
+    "pydantic>=2.7",
+    "anyio>=4.0",
+    "typing-extensions>=4.8",
+    "jinja2>=3.1",
+    "typer>=0.12",
+    "rich>=13.7",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+standard = [
+    "granian>=1.6",
+    "uvicorn[standard]>=0.30",
+    "orjson>=3.10",
+    "httpx>=0.27",
+]
+db = [
+    "sqlmodel>=0.0.22",
+    "alembic>=1.13",
+]
+mongo = [
+    "pymongo>=4.6",
+]
+redis = [
+    "redis>=5.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "maturin>=1.7",
+    "ruff>=0.6",
+]
+docs = [
+    "mkdocs-material>=9.5",
+]
+all = [
+    "pyron[standard,db,mongo,redis,dev,docs]",
+]
+
+[project.scripts]
+pyron = "pyron.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/NezbiT/pyron"
+Documentation = "https://nezbit.github.io/pyron/"
+Source = "https://github.com/NezbiT/pyron"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+module-name = "pyron._core"
+python-source = "python"
+features = ["pyo3/extension-module"]
+include = [
+    "python/pyron/scaffolds/**/*",
+    "python/pyron/static/**/*",
+    "python/pyron/admin/templates/**/*",
+    "python/pyron/admin/static/**/*",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

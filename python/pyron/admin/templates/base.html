@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="{{ locale }}" data-theme="{{ theme }}" data-admin-prefix="{{ prefix }}">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <title>{% block title %}{{ t('desk') }}{% endblock %} — {{ desk_title }}</title>
+  <link rel="stylesheet" href="{{ prefix }}/assets/desk.css?v={{ asset_v }}"/>
+  <script src="{{ prefix }}/assets/desk.js?v={{ asset_v }}" defer></script>
+  <script>
+    (function () {
+      var theme = document.documentElement.getAttribute("data-theme") || "system";
+      if (theme === "system") {
+        var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme-source", "system");
+        try {
+          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (e) {
+            if (document.documentElement.getAttribute("data-theme-source") === "system") {
+              document.documentElement.setAttribute("data-theme", e.matches ? "dark" : "light");
+            }
+          });
+        } catch (err) {}
+      }
+    })();
+  </script>
+</head>
+<body class="{% if not user %}is-gate{% endif %}">
+  <a class="skip" href="#main">{{ t('skip') }}</a>
+  {% if user %}
+  <div class="shell">
+    <aside class="rail" aria-label="{{ t('desk') }}">
+      <a class="brand" href="{{ prefix }}/">
+        <span class="brand-mark">Pyron</span>
+        <span class="brand-sub">{{ t('desk') }}</span>
+      </a>
+      <nav>
+        <p class="nav-label">{{ t('operate') }}</p>
+        <a href="{{ prefix }}/" {% if nav == "desk" %}aria-current="page"{% endif %}>{{ t('desk') }}</a>
+        <a href="{{ prefix }}/routes" {% if nav == "routes" %}aria-current="page"{% endif %}>{{ t('routes') }}</a>
+        {% if user.is_root %}
+        <a href="{{ prefix }}/users" {% if nav == "users" %}aria-current="page"{% endif %}>{{ t('users') }}</a>
+        {% endif %}
+        <p class="nav-label">{{ t('tables') }}</p>
+        {% if models %}
+          {% for m in models %}
+            <a href="{{ prefix }}/m/{{ m.slug }}" {% if nav == "m:" + m.slug %}aria-current="page"{% endif %}>{{ m.plural }}</a>
+          {% endfor %}
+        {% else %}
+          <p class="nav-empty">{{ t('none_registered') }}</p>
+        {% endif %}
+      </nav>
+      {% include "_prefs.html" %}
+      <form class="signout" method="post" action="{{ prefix }}/logout">
+        <p class="who">{{ t('signed_in_as') }} <strong>{{ user.username }}</strong>{% if user.is_root %} · {{ t('root') }}{% endif %}</p>
+        <button type="submit">{{ t('sign_out') }}</button>
+      </form>
+    </aside>
+    <div class="stage">
+      <header class="top">
+        <p class="crumb">{% block crumb %}{{ desk_title }}{% endblock %}</p>
+        <p class="core">{{ t('core') }} <code>{{ core }}</code></p>
+      </header>
+      <main id="main">
+        {% if flash %}
+          <p class="flash flash-{{ flash.kind }}" role="status">{{ flash.text }}</p>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% else %}
+  <main id="main" class="gate">
+    {% block gate %}{% endblock %}
+  </main>
+  {% endif %}
+</body>
+</html>

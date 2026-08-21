@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} — Harbor Bindings{% endblock %}
+{% block description %}{{ book.description or (book.title ~ " by " ~ book.author) }}{% endblock %}
+{% block content %}
+  <p class="meta"><a href="/catalog">Catalog</a> / {{ book.author }}</p>
+  <article class="book">
+    <h1>{{ book.title }}</h1>
+    <p class="by">{{ book.author }}{% if book.year %} · {{ book.year }}{% endif %}</p>
+    <p>
+      <span class="price">${{ '%.2f'|format(book.price) }}</span>
+      {% if book.in_stock %}
+        <span class="status">On the shelf</span>
+      {% else %}
+        <span class="status out">Sold this week</span>
+      {% endif %}
+    </p>
+    {% if book.isbn %}<p class="meta">ISBN {{ book.isbn }}</p>{% endif %}
+    {% if book.description %}
+      <p>{{ book.description }}</p>
+    {% else %}
+      <p class="meta">No shop note on this copy yet.</p>
+    {% endif %}
+    <p><a class="btn" href="mailto:desk@harborbinding.example?subject=Hold%20{{ book.id }}">Ask to hold this copy</a></p>
+  </article>
+{% endblock %}

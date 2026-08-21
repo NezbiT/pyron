@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ t('sign_in') }}{% endblock %}
+{% block gate %}
+  <section class="gate-card">
+    <p class="kicker">{{ t('kicker') }}</p>
+    <h1>{{ t('sign_in') }}</h1>
+    <p class="lede">{{ t('sign_in_lede') }}</p>
+    <p class="hint">{{ t('desk_reads') }} <code>{{ engine_label }}</code>.</p>
+    {% if error %}
+      <p class="banner" role="alert">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="{{ prefix }}/login" novalidate>
+      <input type="hidden" name="csrf" value="{{ csrf }}"/>
+      <input type="hidden" name="next" value="{{ next }}"/>
+      <div class="field">
+        <label for="username">{{ t('username') }}</label>
+        <input id="username" name="username" value="{{ username }}" autocomplete="username" required/>
+      </div>
+      <div class="field">
+        <label for="password">{{ t('password') }}</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required/>
+      </div>
+      <button class="btn" type="submit">{{ t('sign_in') }}</button>
+    </form>
+    <div class="gate-prefs">{% include "_prefs.html" %}</div>
+  </section>
+{% endblock %}

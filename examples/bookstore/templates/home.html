@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Harbor Bindings — used books on the water{% endblock %}
+{% block content %}
+  <section class="hero">
+    <h1>Used books, still salt in the paper.</h1>
+    <p class="lede">A one-room shop behind the chandlery. The catalog is printed on the server so a search engine — or a phone with a tired radio — can still read it.</p>
+    <a class="btn" href="/catalog">Browse the catalog</a>
+    <a class="btn secondary" href="/acquire">Sell us a book</a>
+  </section>
+
+  <h2>On the front table</h2>
+  {% if books %}
+    <div class="grid">
+      {% for book in books %}
+        <a class="card" href="/books/{{ book.id }}">
+          <h3>{{ book.title }}</h3>
+          <p class="by">{{ book.author }}{% if book.year %}, {{ book.year }}{% endif %}</p>
+          <p class="price">${{ '%.2f'|format(book.price) }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>The front table is empty. That usually means a school bus just left.</p>
+      <p><a href="/acquire">Bring something in</a> or wait — we restock from the back room on Thursdays.</p>
+    </div>
+  {% endif %}
+{% endblock %}

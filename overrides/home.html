@@ -1,0 +1,19 @@
+{% extends "main.html" %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="mdx-hero md-typeset">
+    <div class="md-grid">
+      <div class="mdx-hero__inner">
+        <p class="mdx-kicker">Python · Rust · ASGI</p>
+        <h1>Pyron</h1>
+        <p class="lede">Write handlers like FastAPI. Operate the app like Django. Routing and JSON sit in Rust. The admin panel is optional — turn it on without rewriting a route.</p>
+        <p class="actions">
+          <a href="quickstart/" class="md-button md-button--primary">Start in 30 seconds</a>
+          <a href="install/" class="md-button">Install</a>
+          <a href="admin/" class="md-button">Admin panel</a>
+        </p>
+      </div>
+    </div>
+  </section>
+{% endblock %}
