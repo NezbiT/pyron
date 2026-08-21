@@ -58,6 +58,12 @@ class Body(Param):
     kind = "body"
 
 
+class Form(Param):
+    """HTML form field (`application/x-www-form-urlencoded` or multipart)."""
+
+    kind = "form"
+
+
 class Depends:
     def __init__(self, dependency: Any, *, use_cache: bool = True) -> None:
         self.dependency = dependency

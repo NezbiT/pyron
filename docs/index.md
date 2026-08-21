@@ -5,7 +5,7 @@ hide:
   - toc
 ---
 
-Pyron is a hybrid web framework: **Python** for handlers and the product surface, **Rust** for routing, validation, and JSON on the hot path. FastAPI-shaped to write, Django-shaped to operate.
+Pyron is a hybrid web framework: **Python** for handlers and the product surface, **Rust** for routing, validation, and JSON on the hot path. FastAPI-shaped to write, Django-shaped to operate. The concrete gap: HTML form + CLI scaffold + optional admin on the **same model**, without a second stack.
 
 <div class="grid cards" markdown>
 

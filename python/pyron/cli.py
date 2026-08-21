@@ -69,13 +69,17 @@ def init_project(
     table.add_row("template", label)
     table.add_row("core", CORE)
     console.print(table)
+    extra = "  npm install && npm run dev   (second terminal, fullstack only)\n" if template == "fullstack" else ""
     console.print(
         Panel(
             f"[bold]Next[/bold]\n"
             f"  cd {dest.name}\n"
-            "  python -m pip install -e \".\\[standard,db\\]\"\n"
             f"  pyron dev\n"
-            + ("  npm install && npm run dev   (in another terminal, fullstack only)\n" if template == "fullstack" else ""),
+            f"{extra}\n"
+            "Then:\n"
+            "  http://127.0.0.1:8000        pages (HTML form)\n"
+            "  http://127.0.0.1:8000/docs   API\n"
+            + ("  http://127.0.0.1:8000/admin  panel (first visit creates root)\n" if label in {"ssr", "desk"} else ""),
             title="Pyron",
             border_style="red",
         )
@@ -97,6 +101,9 @@ def dev(
     """Run the development server (Granian, or Uvicorn if Granian is missing)."""
     os.environ.setdefault("PYRON_ENV", "dev")
     console.print(f"[bold red]Pyron[/bold red]  core={CORE}  {host}:{port}  target={target}")
+    console.print(f"  http://{host}:{port}/")
+    console.print(f"  http://{host}:{port}/docs")
+    console.print(f"  http://{host}:{port}/admin")
     from pyron.server import run
 
     run(
@@ -439,14 +446,17 @@ app = "app.main:app"
 
 _README = """# {name}
 
-A Pyron ({template}) application.
+A Pyron ({template}) app: HTML pages, JSON API, optional admin — same models.
 
 ```
-python -m pip install -e ".[standard,db]"
 pyron dev
 ```
 
-Open http://127.0.0.1:8000 and http://127.0.0.1:8000/docs
+- http://127.0.0.1:8000 — pages (add an item in the form)
+- http://127.0.0.1:8000/docs — API
+- http://127.0.0.1:8000/admin — panel (first visit creates root)
+
+If `sqlmodel` is missing: `python -m pip install "pyron[db]"`
 """
 
 _MODELS = '''from typing import Optional
@@ -524,25 +534,27 @@ async def get_item(item_id: int) -> ItemOut:
     return _DB[item_id]
 '''
 
-_SSR_MAIN = '''from pyron import HTTPException, ModelAdmin, Pyron
-from pydantic import BaseModel, Field
+_SSR_MAIN = '''from pydantic import BaseModel, Field
+from sqlmodel import Session, select
 from starlette.requests import Request
 
 from app.db import engine, setup
 from app.models import Item
+from pyron import Form, HTTPException, ModelAdmin, Pyron, redirect
 
 app = Pyron(
     title="Pyron",
-    version="0.2.0",
     templates="templates",
     static_dir="static",
     admin=True,
     admin_engine=engine,
 )
 
+
 class ItemAdmin(ModelAdmin):
     list_display = ["id", "title"]
     search_fields = ["title"]
+
 
 app.admin.register(Item, ItemAdmin)
 
@@ -552,7 +564,9 @@ class ItemIn(BaseModel):
     description: str = ""
 
 
-_ITEMS: list[dict] = []
+def _items() -> list[Item]:
+    with Session(engine) as db:
+        return list(db.exec(select(Item).order_by(Item.id.desc())).all())
 
 
 @app.on_event("startup")
@@ -562,7 +576,18 @@ def _startup() -> None:
 
 @app.get("/")
 async def home(request: Request):
-    return await app.render(request, "index.html", {"items": _ITEMS})
+    return await app.render(request, "index.html", {"items": _items()})
+
+
+@app.post("/")
+async def add_item(title: str = Form(), description: str = Form("")):
+    title = title.strip()
+    if not title:
+        return redirect("/", message="A title is required.", kind="err")
+    with Session(engine) as db:
+        db.add(Item(title=title, description=description.strip()))
+        db.commit()
+    return redirect("/", message=f"Added “{title}”.")
 
 
 @app.get("/health")
@@ -572,22 +597,26 @@ async def health() -> dict[str, str]:
 
 @app.get("/api/items")
 async def list_items() -> list[dict]:
-    return _ITEMS
+    return [{"id": i.id, "title": i.title, "description": i.description} for i in _items()]
 
 
 @app.post("/api/items", status_code=201)
 async def create_item(item: ItemIn) -> dict:
-    rec = {"id": len(_ITEMS) + 1, **item.model_dump()}
-    _ITEMS.append(rec)
-    return rec
+    with Session(engine) as db:
+        row = Item(title=item.title, description=item.description)
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return {"id": row.id, "title": row.title, "description": row.description}
 
 
 @app.get("/api/items/{item_id}")
 async def get_item(item_id: int) -> dict:
-    for rec in _ITEMS:
-        if rec["id"] == item_id:
-            return rec
-    raise HTTPException(404, "That item does not exist.")
+    with Session(engine) as db:
+        row = db.get(Item, item_id)
+    if row is None:
+        raise HTTPException(404, "That item does not exist.")
+    return {"id": row.id, "title": row.title, "description": row.description}
 '''
 
 _FULLSTACK_MAIN = '''import os
@@ -647,11 +676,14 @@ _BASE_HTML = """<!doctype html>
   <header class="site-header">
     <a class="mark" href="/">Pyron</a>
     <nav>
-      <a href="/docs">API docs</a>
-      <a href="/admin">Admin panel</a>
+      <a href="/docs">API</a>
+      <a href="/admin">Admin</a>
     </nav>
   </header>
   <main>
+    {% if flash %}
+      <p class="flash flash-{{ flash.kind }}" role="status">{{ flash.text }}</p>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 </body>
@@ -661,15 +693,27 @@ _BASE_HTML = """<!doctype html>
 _INDEX_HTML = """{% extends "base.html" %}
 {% block title %}Home{% endblock %}
 {% block content %}
-  <h1>It works.</h1>
+  <h1>Items</h1>
+  <p class="lede">This page, <a href="/docs">/docs</a>, and <a href="/admin">/admin</a> use the same table.</p>
+  <form method="post" action="/" class="stack">
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" name="title" required maxlength="200" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label for="description">Description <span class="opt">(optional)</span></label>
+      <input id="description" name="description" maxlength="400"/>
+    </div>
+    <button class="btn" type="submit">Add item</button>
+  </form>
   {% if items %}
-    <ul>
+    <ul class="list">
     {% for item in items %}
-      <li>{{ item.title }}</li>
+      <li><strong>{{ item.title }}</strong>{% if item.description %} — {{ item.description }}{% endif %}</li>
     {% endfor %}
     </ul>
   {% else %}
-    <p class="empty">You have not added any items yet. POST one to <code>/api/items</code> or open <a href="/docs">the API docs</a>.</p>
+    <p class="empty">No items yet. Use the form — you do not need the API or the admin for the first one.</p>
   {% endif %}
 {% endblock %}
 """
@@ -683,19 +727,41 @@ _NOT_FOUND_HTML = """{% extends "base.html" %}
 """
 
 _CSS = """:root {
-  --ink: #1a1512;
-  --paper: #f4ede4;
-  --ember: #e85d04;
-  --muted: #7a6a5c;
+  --ink: #1a1a1a;
+  --paper: #f7f8fa;
+  --ember: #c2410c;
+  --muted: #6c707e;
+  --line: #d3d5db;
+  --card: #fff;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.5 Georgia, "Times New Roman", serif; }
-.site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e2d6c8; }
-.mark { font-weight: 700; color: var(--ember); text-decoration: none; letter-spacing: 0.04em; }
-nav a { color: var(--ink); }
-main { max-width: 42rem; margin: 2.5rem auto; padding: 0 1.5rem; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card); }
+.mark { font-weight: 700; color: var(--ember); text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; }
+nav { display: flex; gap: 1rem; }
+nav a { color: var(--ink); min-height: 44px; display: inline-flex; align-items: center; }
+main { max-width: 36rem; margin: 2.2rem auto; padding: 0 1.5rem 3rem; }
+h1 { font-size: 1.8rem; margin: 0 0 0.35rem; }
+.lede { color: var(--muted); margin: 0 0 1.4rem; }
+.stack { display: flex; flex-direction: column; gap: 0.85rem; margin: 0 0 1.5rem; }
+.field label { display: block; font-weight: 600; margin: 0 0 0.3rem; }
+.opt { font-weight: 400; color: var(--muted); }
+.field input {
+  width: 100%; font: inherit; padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0.45rem 0.95rem; width: fit-content;
+  background: var(--ember); color: #fff; border: 0; font: inherit; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+.list { padding: 0; margin: 0; list-style: none; }
+.list li { padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
 .empty { color: var(--muted); }
-code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; }
+.flash { padding: 0.65rem 0.9rem; margin: 0 0 1rem; border: 1px solid #2e7d32; background: #f0fdf4; }
+.flash-err { border-color: var(--ember); background: #fff4ed; }
+code { font-family: ui-monospace, "JetBrains Mono", Consolas, monospace; font-size: 0.9em; }
 """
 
 _PKG_JSON = """{

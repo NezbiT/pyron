@@ -22,7 +22,7 @@ async def lifespan(_app: Pyron):
 
 app = Pyron(
     title="Harbor Bindings",
-    version="0.6.2",
+    version="0.7.0",
     description="A used bookstore. The catalog is server-rendered for search engines; "
     "the same records are available as JSON.",
     templates="templates",

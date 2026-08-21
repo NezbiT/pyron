@@ -2,7 +2,7 @@
 
 A hybrid Python web framework with a Rust core.
 
-Write handlers like **FastAPI**. Operate the app like **Django** when you want a panel. The hot path — routing, JSON Schema, serialization — lives in Rust behind PyO3.
+FastAPI gets you `/docs` in minutes, then you assemble Jinja, forms, a CLI, and an admin yourself. **Pyron is that whole path:** HTML form, JSON API, and optional `/admin` on the **same model**, from `pyron init`.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-c2410c.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-1a1a1a.svg)](https://www.python.org/downloads/)
@@ -19,7 +19,8 @@ Write handlers like **FastAPI**. Operate the app like **Django** when you want a
 ## Features
 
 - Pydantic bodies → validation **and** automatic OpenAPI (`/docs`, `/redoc`)
-- Optional Jinja2 SSR and Vite for React / Vue / Svelte
+- Jinja2 pages + `Form()` + flash (`redirect("/", message="Saved.")`) — no extra packages
+- Optional Vite for React / Vue / Svelte
 - Optional **admin panel** at `/admin` (Django-style): root user, CRUD, filters, bulk delete, inlines, history
 - Same `request.user` on API and the panel; `@permission_required("book.delete")`; staff cannot delete by default
 - Admin panel UI: **English / Español / Português / Français**, **light / dark / system** (system is the default)
@@ -41,7 +42,17 @@ pyron version
 
 PowerShell does not expand `pyron-*.whl` for pip; use `Get-ChildItem` or the exact wheel name. Full steps: [docs/install.md](docs/install.md).
 
-## 30-second API
+## 30 seconds (pages + API + admin)
+
+```bash
+pyron init shop          # default: HTML form, /docs, /admin
+cd shop
+pyron dev
+```
+
+Open http://127.0.0.1:8000 — add an item in the form. Same row appears in `/docs` and `/admin`.
+
+## 30-second API only
 
 ```python
 from pydantic import BaseModel, Field
@@ -63,8 +74,8 @@ async def create_book(book: BookIn) -> BookIn:
 ```
 
 ```bash
-pyron init shop --template api    # or ssr | desk | fullstack
-pyron dev --app app.main:app      # http://127.0.0.1:8000/docs
+pyron init shop --template api    # JSON only; add the panel later with `pyron enable admin`
+pyron dev --app app.main:app
 ```
 
 ## Admin panel later, without destroying code
@@ -122,4 +133,4 @@ cargo test --lib
 
 ## Status
 
-v0.6.2. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).
+v0.7.0. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).

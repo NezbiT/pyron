@@ -459,6 +459,18 @@ class Pyron:
                     raise HTTPException(422, [{"loc": ["path", slot.alias], "msg": "missing", "type": "missing"}])
                 kwargs[slot.name] = _coerce(raw, slot.annotation)
                 continue
+            if slot.source == "form":
+                form = await request.form()
+                raw = form.get(slot.alias)
+                if raw is None or raw == "":
+                    if slot.required:
+                        raise ValidationException(
+                            [{"loc": ["form", slot.alias], "msg": "field required", "type": "missing"}]
+                        )
+                    kwargs[slot.name] = None if slot.default is UNSET else slot.default
+                else:
+                    kwargs[slot.name] = _coerce(str(raw), slot.annotation)
+                continue
             if slot.source == "query":
                 raw = request.query_params.get(slot.alias)
                 if raw is None:

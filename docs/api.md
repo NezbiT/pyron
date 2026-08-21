@@ -24,6 +24,19 @@ async def create_book(book: BookIn) -> BookIn:
 
 Named routes reverse with `app.url_for("book", book_id=3)` (also available in Jinja as `url_for`).
 
+HTML forms (this is the FastAPI gap):
+
+```python
+from pyron import Form, redirect
+
+@app.post("/")
+async def add_item(title: str = Form(), description: str = Form("")):
+    ...
+    return redirect("/", message=f"Added “{title}”.")
+```
+
+`message=` sets a one-shot cookie. The next `app.render(...)` exposes `flash.text` / `flash.kind` in the template and clears it.
+
 ```python
 from pyron import BackgroundTasks
 

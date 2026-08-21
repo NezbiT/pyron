@@ -1,12 +1,24 @@
 # FastAPI vs Django vs Pyron
 
-| Everyday question | FastAPI | Django | Pyron |
-|---|---|---|---|
-| `POST /books` + `/docs` in minutes | Yes | Possible, more setup | Yes, FastAPI-shaped |
-| Panel to edit rows without extra views | You build it | `/admin` | Admin panel `/admin` (optional) |
-| Root operator | You build it | Yes | Yes, when the admin panel is on |
-| HTML for crawlers + JSON for apps | JSON easy | HTML easy | Both |
-| Hot path (route + validate + JSON) | Python + pydantic-core | Python | Rust core + Python handlers |
-| SQL + Mongo + Redis in one process | You wire it | SQL first | SQL default; Mongo documents; Redis cache |
+The bet is not RPS. FastAPI already wins “JSON API in an afternoon.” Django wins “operate the product.” **Pyron is the path FastAPI leaves you to invent:** HTML pages, a CLI that scaffolds them, and an admin you can turn on later — same models, same process.
 
-Pyron is not a FastAPI rewrite in Rust and not a Django clone. Write endpoints like FastAPI; operate data like Django when you turn the admin panel on. Layers you skip (`admin=False`, no templates) stay out of the process.
+| Everyday job | FastAPI | Django | Pyron |
+|---|---|---|---|
+| `POST /books` + `/docs` | Minutes | More setup | Same as FastAPI |
+| HTML page + form that saves | You wire Starlette + Jinja + CSRF yourself | Built in | `templates=` + `Form()` + `redirect(..., message=...)` |
+| `init` → running app | Run an existing file | `startproject` (heavy) | `pyron init shop && pyron dev` |
+| Edit rows without extra views | You build it | `/admin` | `/admin` when you want it |
+| API-only for months, panel later | N/A | Hard | `pyron enable admin` does not rewrite handlers |
+| SQL + Mongo + Redis | You wire it | SQL first | SQL default; Mongo documents; Redis cache |
+
+## What is 2–3× easier
+
+After `pyron init shop` (default template is **ssr**):
+
+1. The **home page has a form**. Submitting it writes a row. You do not open `/docs` to create the first record.
+2. `/api/items` and `/admin` read **that same table**. One `Item` model.
+3. A flash message confirms the save. No JS.
+
+In FastAPI that is three tutorials (Jinja, forms, admin-or-SQLAdmin) and two extra packages. In Django it is a project full of apps before “hello.”
+
+Pyron is not a FastAPI rewrite in Rust and not a Django clone. Layers you skip (`admin=False`, no templates) stay out of the process.

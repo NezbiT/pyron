@@ -54,8 +54,14 @@ class Templates:
         if request is not None:
             ctx.setdefault("request", request)
             _bind_url_for(ctx, request)
+            _bind_flash(ctx, request)
         html = self.get_template(name).render(**ctx)
-        return HTMLResponse(html, status_code=status_code, headers=headers)
+        resp = HTMLResponse(html, status_code=status_code, headers=headers)
+        if ctx.get("flash"):
+            from pyron.flash import clear_flash
+
+            clear_flash(resp)
+        return resp
 
     def render_sync(
         self,
@@ -69,11 +75,25 @@ class Templates:
         if request is not None:
             ctx.setdefault("request", request)
             _bind_url_for(ctx, request)
+            _bind_flash(ctx, request)
         html = self.get_template(name).render(**ctx)
-        return HTMLResponse(html, status_code=status_code)
+        resp = HTMLResponse(html, status_code=status_code)
+        if ctx.get("flash"):
+            from pyron.flash import clear_flash
+
+            clear_flash(resp)
+        return resp
 
 
 def _bind_url_for(ctx: dict[str, Any], request: Request) -> None:
     app = request.scope.get("app")
     if app is not None and hasattr(app, "url_for"):
         ctx.setdefault("url_for", app.url_for)
+
+
+def _bind_flash(ctx: dict[str, Any], request: Request) -> None:
+    if "flash" in ctx:
+        return
+    from pyron.flash import pop_flash
+
+    ctx["flash"] = pop_flash(request)

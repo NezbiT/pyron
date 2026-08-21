@@ -2,6 +2,15 @@
 
 How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
+## 0.7.0 — 2026-08-21
+
+The FastAPI gap: HTML form, CLI, templates — one model.
+
+- `Form()` for HTML posts; `redirect("/", message="Saved.")` flash (no admin required).
+- `pyron init` (default **ssr**): home form writes the same SQL `Item` as `/api/items` and `/admin`. No more in-memory list vs admin table.
+- Scaffold CSS matches the admin (ember, no brown Georgia).
+- `pyron init` / `pyron dev` print `/`, `/docs`, `/admin`.
+
 ## 0.6.2 — 2026-08-21
 
 Documentation website.

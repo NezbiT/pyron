@@ -1,5 +1,26 @@
 # Quickstart
 
+The default is a **page with a form**, not an API-only file. FastAPI leaves HTML, forms, and a panel as homework; `pyron init` does not.
+
+```bash
+pyron init shop
+cd shop
+pyron dev
+```
+
+- http://127.0.0.1:8000 — HTML form (creates a row)
+- http://127.0.0.1:8000/docs — the same row as JSON
+- http://127.0.0.1:8000/admin — the same row in the panel (first visit creates root)
+
+```python
+from pyron import Form, redirect
+
+@app.post("/")
+async def add_item(title: str = Form(), description: str = Form("")):
+    ...
+    return redirect("/", message=f"Added “{title}”.")
+```
+
 ## API only
 
 ```python
@@ -39,9 +60,9 @@ Pydantic models on the handler **are** the contract: validation, types, and Open
 ## Scaffold
 
 ```bash
+pyron init shop                     # default ssr: form + API + admin
 pyron init shop --template api      # JSON + docs
-pyron init shop --template ssr      # JSON + Jinja
-pyron init shop --template desk     # JSON + Jinja + /admin
+pyron init shop --template desk     # same as ssr
 pyron init shop --template fullstack
 ```
 
