@@ -36,11 +36,46 @@ That command writes `app/admin.py` if missing and **appends** a marked block to 
 
 Then open http://127.0.0.1:8000/admin
 
+## Pages (CMS)
+
+When the panel is on, **Pages** is already there. You do not register a model for About / Contact / Hours.
+
+1. Open `/admin` → **Pages** → **Add Page**.
+2. Title, slug (`about` → public URL `/p/about`), Markdown body (preview on the right).
+3. Jinja2 generates the public view from `page.html` (your `templates/base.html` if the app has templates).
+
+The body is Markdown (`**bold**`, lists, `[text](https://…)`). Legacy HTML (a body that starts with a tag) still renders. `{{ 7*7 }}` is shown as text — it is not a Jinja template.
+
+## Settings
+
+`/admin/settings` is a single form: site name, tagline, phone, email, hours, address, website. The public header uses `site.name`. The footer uses phone (`tel:`), email, hours, and address when they are set.
+
+```html
+<a class="mark" href="/">{{ site.name }}</a>
+{% if site.phone %}<a href="{{ site.phone_href }}">{{ site.phone }}</a>{% endif %}
+```
+
+The desk home is **Site** (Pages + Settings) then **Data** (your registered tables).
+
+First run seeds **About** and **Contact**. Published rows with **in nav** appear in the public header as `site_pages`. Unpublished pages 404 for visitors; a signed-in operator can still open `/p/{slug}` to preview.
+
+```html
+<nav>
+  {% for p in site_pages %}
+    <a href="/p/{{ p.slug }}">{{ p.title }}</a>
+  {% endfor %}
+</nav>
+```
+
+Override the view by adding `templates/page.html` (and `pages.html` for `/p`). `Pyron(admin=True, pages=False)` skips the built-in table and the `/p/…` routes.
+
 | Screen | Who | What |
 |---|---|---|
 | First run | nobody | Create the root account |
 | Sign in | operators | Session, 7 days |
 | Admin panel | staff + root | Counts and shortcuts |
+| Pages | staff + root | CMS views; Markdown + preview; Jinja2 renders `/p/{slug}` |
+| Settings | staff + root | Site name, phone, hours; public header/footer |
 | Tables | staff + root | Search, `list_filter`, paginate, add, edit, delete (named confirm) |
 | Bulk | staff with delete | Checkbox rows → confirm page → `Log` entry per row |
 | Change form | staff + root | Inlines (`TabularInline`) and a short history |

@@ -6,15 +6,38 @@
   <p class="lede">{{ t('desk_lede') }}</p>
 
   <ul class="stats">
-    <li>{{ t('n_tables', n=cards|length) }}</li>
+    <li>{{ t('n_tables', n=data_cards|length) }}</li>
     <li>{{ t('n_routes', n=route_count) }}</li>
     <li>{% if user_count == 1 %}{{ t('n_operator_one', n=user_count) }}{% else %}{{ t('n_operators', n=user_count) }}{% endif %}</li>
   </ul>
 
-  <h2>{{ t('tables') }}</h2>
-  {% if cards %}
+  <h2>{{ t('site') }}</h2>
+  <div class="grid">
+    {% for card in site_cards %}
+      <a class="tile" href="{{ prefix }}/m/{{ card.bound.slug }}">
+        <h3>{{ card.bound.plural }}</h3>
+        <p class="count">{% if card.count == 1 %}{{ t('n_page_one', n=card.count) }}{% else %}{{ t('n_pages', n=card.count) }}{% endif %}</p>
+        <p class="go">{% if card.count %}{{ t('open_pages') }}{% else %}{{ t('add_page') }}{% endif %}</p>
+      </a>
+    {% endfor %}
+    {% if pages_enabled and not site_cards %}
+      <a class="tile" href="{{ prefix }}/m/pages">
+        <h3>{{ t('pages') }}</h3>
+        <p class="count">{{ t('pages_empty') }}</p>
+        <p class="go">{{ t('add_page') }}</p>
+      </a>
+    {% endif %}
+    <a class="tile" href="{{ prefix }}/settings">
+      <h3>{{ t('settings') }}</h3>
+      <p class="count">{{ site.name if site and site.name else desk_title }}</p>
+      <p class="go">{{ t('open_settings') }}</p>
+    </a>
+  </div>
+
+  <h2>{{ t('data') }}</h2>
+  {% if data_cards %}
     <div class="grid">
-      {% for card in cards %}
+      {% for card in data_cards %}
         <a class="tile" href="{{ prefix }}/m/{{ card.bound.slug }}">
           <h3>{{ card.bound.plural }}</h3>
           <p class="count">{% if card.count == 1 %}{{ t('n_record_one', n=card.count) }}{% else %}{{ t('n_records', n=card.count) }}{% endif %}</p>
@@ -25,8 +48,8 @@
     </div>
   {% else %}
     <div class="empty">
-      <p>{{ t('no_tables') }}</p>
-      <p>{{ t('no_tables_hint') }}</p>
+      <p>{{ t('no_data') }}</p>
+      <p>{{ t('no_data_hint') }}</p>
     </div>
   {% endif %}
 {% endblock %}

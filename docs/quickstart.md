@@ -17,6 +17,7 @@ pyron dev
 - http://127.0.0.1:8000 — HTML form (creates a row)
 - http://127.0.0.1:8000/docs — the same row as JSON
 - http://127.0.0.1:8000/admin — the same row in the panel (first visit creates root)
+- http://127.0.0.1:8000/p/about — a CMS page; add more under **Pages** in `/admin`. Jinja2 renders them.
 
 ```python
 from pyron import Form, redirect
@@ -89,6 +90,8 @@ async def home(request: Request):
 
 Pages that should not appear in Swagger: `include_in_schema=False`.
 
+With the admin panel on, **Pages** in `/admin` are CMS views (Markdown + preview). You do not write a route: Jinja2 renders `/p/{slug}` from `page.html`. **Settings** is the shop name, phone, and hours. Details: [Admin — Pages](admin.md#pages-cms) · [Settings](admin.md#settings).
+
 ## Example
 
 ```bash
@@ -96,4 +99,4 @@ cd examples/bookstore
 pyron dev --app app.main:app
 ```
 
-Shop at `/`, API at `/api/books`, admin panel at `/admin`.
+Shop at `/`, API at `/api/books`, admin panel at `/admin`, CMS pages at `/p/about`.

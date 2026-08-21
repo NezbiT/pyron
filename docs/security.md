@@ -33,6 +33,8 @@ pyron serve
 | Host allowlist | `PYRON_ALLOWED_HOSTS` in production |
 | Docs | Off in production unless you set `PYRON_EXPOSE_DOCS=1` |
 
+CMS **Pages** store Markdown (legacy HTML still allowed). Markdown is escaped first, then a small set of tags is inserted. Jinja is never compiled (`{{ 7*7 }}` stays text). Links must be `http(s)`, `/`, or `mailto:`. Unpublished slugs 404 for visitors. Only operators write this body.
+
 Do **not** set `PYRON_TRUST_PROXY=1` unless a reverse proxy you control sets `X-Forwarded-For`. Otherwise clients can spoof the throttle key.
 
 `PYRON_SESSION_SECURE=1` on plain `http://127.0.0.1` will prevent the browser from storing the cookie. Use it behind HTTPS.

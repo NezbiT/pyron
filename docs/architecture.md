@@ -41,6 +41,9 @@ Without a compiled extension (`PYRON_PURE_PYTHON=1`) a Python fallback loads. Ca
 | `db.py` | SQLModel engine, Alembic wrappers |
 | `admin/site.py` | Admin views; CRUD via `bound.store` |
 | `admin/options.py` | `ModelAdmin`, `TabularInline` |
+| `pages.py` | Built-in CMS `Page`; Markdown body; public `/p/{slug}` via Jinja2 |
+| `siteconfig.py` | Singleton site settings (name, phone, hours) |
+| `page_templates/` | Fallback `page.html` / `pages.html` (app `base.html` wins) |
 | `admin/auth.py` | Operators, PBKDF2, session cookie, log |
 | `security.py` | Headers, throttle, password rules |
 | `settings.py` | Env (`PYRON_*`, `DATABASE_URL`, `MONGO_URL`, `REDIS_URL`) |

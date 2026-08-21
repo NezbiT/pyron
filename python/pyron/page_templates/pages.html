@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Pages{% endblock %}
+{% block content %}
+  <h1>Pages</h1>
+  {% if pages %}
+    <ul class="page-index">
+      {% for item in pages %}
+        <li><a href="/p/{{ item.slug }}">{{ item.title }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No pages are published yet.</p>
+  {% endif %}
+{% endblock %}

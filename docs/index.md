@@ -53,7 +53,8 @@ Pyron is a hybrid web framework: **Python** for handlers and the product surface
 |---|---|
 | Install and run something | [Install](install.md) · [Quickstart](quickstart.md) |
 | Expose a JSON API with `/docs` | [API](api.md) |
-| Add HTML pages | [Quickstart](quickstart.md#server-rendered-pages) |
+| Add HTML pages | [Quickstart](quickstart.md#server-rendered-pages) · [CMS Pages](admin.md#pages-cms) |
+| Site name, phone, hours | [Settings](admin.md#settings) |
 | Use the admin panel (`/admin`) | [Admin panel](admin.md) |
 | Switch language or light/dark | [Appearance](admin.md#language-and-appearance) |
 | Start API-only, enable the panel later | [Enable features](enable.md) |
@@ -64,7 +65,7 @@ Pyron is a hybrid web framework: **Python** for handlers and the product surface
 | CLI reference | [CLI](cli.md) |
 | What changed | [Changelog](changelog.md) |
 
-The example shop is `examples/bookstore`: public catalog, JSON API, and admin panel on the same process.
+The example shop is `examples/bookstore`: public catalog, JSON API, admin panel, and CMS pages (`/p/about`) on the same process.
 
 ```bash
 cd examples/bookstore

@@ -37,6 +37,8 @@ async def add_item(title: str = Form(), description: str = Form("")):
 
 `message=` sets a one-shot cookie. The next `app.render(...)` exposes `flash.text` / `flash.kind` in the template and clears it.
 
+CMS pages (About, Contact, anything you add) do **not** need a route: with `admin=True`, **Pages** in `/admin` are rendered by Jinja2 at `/p/{slug}`. See [Admin — Pages](admin.md#pages-cms).
+
 ```python
 from pyron import BackgroundTasks
 

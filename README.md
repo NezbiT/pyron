@@ -21,7 +21,7 @@ FastAPI gets you `/docs` in minutes, then you assemble Jinja, forms, a CLI, and 
 - Pydantic bodies → validation **and** automatic OpenAPI (`/docs`, `/redoc`)
 - Jinja2 pages + `Form()` + flash (`redirect("/", message="Saved.")`) — no extra packages
 - Optional Vite for React / Vue / Svelte
-- Optional **admin panel** at `/admin` (Django-style): root user, CRUD, filters, bulk delete, inlines, history
+- Optional **admin panel** at `/admin` (Django-style): **Site** (Pages + Settings) and **Data** (your tables); Markdown pages with preview; public header/footer from settings
 - Same `request.user` on API and the panel; `@permission_required("book.delete")`; staff cannot delete by default
 - Admin panel UI: **English / Español / Português / Français**, **light / dark / system** (system is the default)
 - Enable the panel later with `pyron enable admin` — does not rewrite your API handlers
@@ -50,7 +50,7 @@ cd <folder>
 pyron dev
 ```
 
-Open http://127.0.0.1:8000 — add an item in the form. Same row appears in `/docs` and `/admin`.
+Open http://127.0.0.1:8000 — add an item in the form. Same row appears in `/docs` and `/admin`. **Pages** in the panel become public views at `/p/about` (Jinja2).
 
 ## 30-second API only
 

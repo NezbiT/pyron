@@ -16,7 +16,7 @@ pyron db init | migrate | upgrade
 pyron version
 ```
 
-`pyron dev` puts the current directory on `PYTHONPATH` so Windows + reload can import `app`. `pyron serve` sets `PYRON_ENV=production`.
+`pyron dev` puts the current directory on `PYTHONPATH` so Windows + reload can import `app`. It prints `/`, `/docs`, `/admin`, and `/p/about` (CMS pages, when the panel is on). Site name, phone, and hours are `/admin/settings`. `pyron serve` sets `PYRON_ENV=production`.
 
 ## startapp
 

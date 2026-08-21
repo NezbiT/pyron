@@ -8,6 +8,8 @@ The bet is not RPS. FastAPI already wins “JSON API in an afternoon.” Django 
 | HTML page + form that saves | You wire Starlette + Jinja + CSRF yourself | Built in | `templates=` + `Form()` + `redirect(..., message=...)` |
 | `init` → running app | Run an existing file | `startproject` (heavy) | `pyron init shop && pyron dev` |
 | Edit rows without extra views | You build it | `/admin` | `/admin` when you want it |
+| Add a public page from the panel | You write a route + template | FlatPages / CMS app | **Pages** in `/admin` (Markdown) → `/p/{slug}` |
+| Shop name, phone, hours | You hardcode templates | sites / settings app | **Settings** in `/admin`; public header/footer read `site` |
 | API-only for months, panel later | N/A | Hard | `pyron enable admin` does not rewrite handlers |
 | SQL + Mongo + Redis | You wire it | SQL first | SQL default; Mongo documents; Redis cache |
 

@@ -1,13 +1,27 @@
-{% macro desk_input(f, input_name) %}
+{% macro desk_input(f, input_name, t=none) %}
   {% if f.widget == "checkbox" %}
     <div class="field check">
       <input id="{{ input_name }}" name="{{ input_name }}" type="checkbox" value="1" {% if f.checked %}checked{% endif %} {% if f.readonly %}disabled{% endif %}/>
       <label for="{{ input_name }}">{{ f.label }}</label>
     </div>
+  {% elif f.widget == "markdown" %}
+    <div class="field md-field">
+      <label for="{{ input_name }}">{{ f.label }}</label>
+      <p class="hint">{% if t %}{{ t('markdown_help') }}{% else %}{{ f.help }}{% endif %}</p>
+      <div class="md-split">
+        <textarea id="{{ input_name }}" name="{{ input_name }}" rows="14" data-md-preview {% if f.readonly %}readonly{% endif %}>{{ f.value }}</textarea>
+        <div>
+          <p class="md-kicker">{% if t %}{{ t('preview') }}{% else %}Preview{% endif %}</p>
+          <div class="md-preview" data-md-output aria-live="polite">
+            {% if f.preview_html %}{{ f.preview_html | safe }}{% else %}<p class="empty">{% if t %}{{ t('preview_empty') }}{% else %}Nothing is written here yet.{% endif %}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
   {% elif f.widget == "textarea" %}
     <div class="field">
       <label for="{{ input_name }}">{{ f.label }}</label>
-      <textarea id="{{ input_name }}" name="{{ input_name }}" rows="5" {% if f.required %}required{% endif %} {% if f.readonly %}readonly{% endif %}>{{ f.value }}</textarea>
+      <textarea id="{{ input_name }}" name="{{ input_name }}" rows="{% if f.name in ['body', 'content', 'description'] %}14{% else %}5{% endif %}" {% if f.required %}required{% endif %} {% if f.readonly %}readonly{% endif %}>{{ f.value }}</textarea>
       {% if f.help %}<p class="hint">{{ f.help }}</p>{% endif %}
     </div>
   {% else %}

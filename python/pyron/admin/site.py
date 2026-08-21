@@ -36,7 +36,7 @@ class _Bound:
         self.admin = admin
         self.store = store
         self.kind = kind
-        self.slug = insp.slug_for(model)
+        self.slug = (getattr(admin, "slug", None) or insp.slug_for(model)).strip() or insp.slug_for(model)
         self.pk = insp.primary_key(model)
         singular = admin.verbose_name or model.__name__
         self.name = singular
@@ -58,6 +58,7 @@ class AdminSite:
         title: str | None = None,
         secret: bytes | None = None,
         mongo: Any | None = None,
+        pages: bool = True,
     ) -> None:
         self.engine = engine
         self.title = title
@@ -70,6 +71,8 @@ class AdminSite:
         self._user_model = None
         self._sql_store: Any = None
         self._doc_store: Any = None
+        self.pages_enabled = pages
+        self._page_templates: Templates | None = None
         if engine is not None:
             from pyron.store import SqlStore
 
@@ -94,7 +97,14 @@ class AdminSite:
             self._sql_store = SqlStore(self.engine)
         return self._sql_store, "sql"
 
-    def register(self, model: type, admin: type[ModelAdmin] | ModelAdmin | None = None) -> None:
+    def register(
+        self,
+        model: type,
+        admin: type[ModelAdmin] | ModelAdmin | None = None,
+        *,
+        first: bool = False,
+        sync: bool = True,
+    ) -> None:
         if admin is None:
             opts = ModelAdmin(model)
         elif isinstance(admin, type):
@@ -105,10 +115,14 @@ class AdminSite:
             opts.model = model
         store, kind = self._store_for(model)
         bound = _Bound(model, opts, store=store, kind=kind)
+        existed = bound.slug in self._bound
         self._bound[bound.slug] = bound
-        if bound.slug not in self._order:
-            self._order.append(bound.slug)
-        if self.engine is not None:
+        if not existed:
+            if first:
+                self._order.insert(0, bound.slug)
+            else:
+                self._order.append(bound.slug)
+        if sync and self.engine is not None:
             self._sync_permissions()
 
     def bind(self, engine: Any) -> None:
@@ -165,6 +179,10 @@ class AdminSite:
 
         for cls in auth.auth_table_classes():
             SQLModel.metadata.create_all(self.engine, tables=[cls.__table__])
+        from pyron.siteconfig import SiteSettings, seed_site
+
+        SQLModel.metadata.create_all(self.engine, tables=[SiteSettings.__table__])
+        seed_site(self.engine, title=self.title or (self.app.title if self.app else "Pyron"))
         for bound in self.models():
             table = getattr(bound.model, "__table__", None)
             if table is not None:
@@ -243,6 +261,8 @@ class AdminSite:
         self.app = app
         self.prefix = prefix.rstrip("/") or "/admin"
         app.admin = self
+        if self.pages_enabled:
+            self.install_pages()
         app.mount(f"{self.prefix}/assets", _AdminAssets(), name="admin-assets")
         routes: list[tuple[str, Callable, list[str]]] = [
             ("/setup", self.setup_view, ["GET", "POST"]),
@@ -250,6 +270,8 @@ class AdminSite:
             ("/logout", self.logout_view, ["POST", "GET"]),
             ("/prefs", self.prefs_view, ["GET"]),
             ("/", self.desk_view, ["GET"]),
+            ("/settings", self.settings_view, ["GET", "POST"]),
+            ("/preview-markdown", self.preview_markdown, ["POST"]),
             ("/routes", self.routes_view, ["GET"]),
             ("/users", self.users_list, ["GET"]),
             ("/users/new", self.user_new, ["GET", "POST"]),
@@ -271,6 +293,104 @@ class AdminSite:
             )
         if self.engine is not None:
             self.ensure_tables()
+            if self.pages_enabled:
+                self._seed_pages()
+
+    def install_pages(self) -> None:
+        from pyron.pages import Page, make_page_admin
+
+        if "pages" not in self._bound:
+            self.register(Page, make_page_admin(), first=True, sync=False)
+        self._bind_page_templates()
+        if self.app is None:
+            return
+        self.app.add_api_route(
+            "/p",
+            self.public_pages_index,
+            methods=["GET"],
+            include_in_schema=False,
+            name="public_pages_index",
+        )
+        self.app.add_api_route(
+            "/p/{slug}",
+            self.public_page_view,
+            methods=["GET"],
+            include_in_schema=False,
+            name="public_page",
+        )
+
+    def _bind_page_templates(self) -> None:
+        from pyron.pages import TEMPLATES_DIR
+
+        app = self.app
+        if app is not None and getattr(app, "templates", None) is not None:
+            app.templates.add_search_path(TEMPLATES_DIR)
+            return
+        if self._page_templates is None:
+            self._page_templates = Templates(TEMPLATES_DIR)
+
+    def _public_templates(self) -> Templates:
+        self._bind_page_templates()
+        app = self.app
+        if app is not None and getattr(app, "templates", None) is not None:
+            return app.templates
+        if self._page_templates is None:
+            from pyron.pages import TEMPLATES_DIR
+
+            self._page_templates = Templates(TEMPLATES_DIR)
+        return self._page_templates
+
+    def _seed_pages(self) -> None:
+        from pyron.pages import seed_pages
+
+        title = self.title or (self.app.title if self.app else "Pyron")
+        seed_pages(self.engine, title=title)
+
+    def _resolve_page_template(self, templates: Templates, name: str) -> str:
+        try:
+            templates.get_template(name)
+            return name
+        except Exception:
+            return name
+
+    async def public_pages_index(self, request: Request):
+        self.ensure_tables()
+        self._seed_pages()
+        from pyron.pages import published_pages
+
+        pages = published_pages(self.engine)
+        templates = self._public_templates()
+        return await templates.render(
+            request,
+            self._resolve_page_template(templates, "pages.html"),
+            {
+                "pages": pages,
+                "desk_title": self.title or (self.app.title if self.app else "Pyron"),
+            },
+        )
+
+    async def public_page_view(self, request: Request, slug: str):
+        self.ensure_tables()
+        self._seed_pages()
+        from pyron.pages import load_page
+
+        row = load_page(self.engine, slug)
+        if row is None:
+            raise HTTPException(404, "That page is not here.")
+        if not row.published:
+            sess = auth.read_session(request, self.secret)
+            user = self._user_from_session(sess) if sess else None
+            if user is None:
+                raise HTTPException(404, "That page is not here.")
+        templates = self._public_templates()
+        return await templates.render(
+            request,
+            self._resolve_page_template(templates, "page.html"),
+            {
+                "page": row,
+                "desk_title": self.title or (self.app.title if self.app else "Pyron"),
+            },
+        )
 
     # ------------------------------------------------------------------
     # Render + auth
@@ -321,6 +441,15 @@ class AdminSite:
             "asset_v": _asset_v(),
             **context,
         }
+        models = ctx.get("models") or []
+        ctx.setdefault(
+            "site_models",
+            [m for m in models if getattr(m, "slug", None) == "pages"],
+        )
+        ctx.setdefault(
+            "data_models",
+            [m for m in models if getattr(m, "slug", None) != "pages"],
+        )
         resp = self.templates.render_sync(request, name, ctx, status_code=status)
         if sess is not None:
             if flash:
@@ -543,18 +672,91 @@ class AdminSite:
             except Exception:
                 n = 0
             cards.append({"bound": bound, "count": n})
+        site_cards = [c for c in cards if c["bound"].slug == "pages"]
+        data_cards = [c for c in cards if c["bound"].slug != "pages"]
+        from pyron.siteconfig import load_site
+
+        site = load_site(
+            self.engine,
+            fallback=self.title or (self.app.title if self.app else "Pyron"),
+        )
         return self._render(
             request,
             "desk.html",
             {
                 "nav": "desk",
                 "cards": cards,
+                "site_cards": site_cards,
+                "data_cards": data_cards,
+                "site": site,
+                "pages_enabled": self.pages_enabled,
                 "user_count": self._count_users(),
                 "route_count": len(getattr(self.app, "routes", []) or []),
             },
             session=sess,
             user=user,
         )
+
+    async def settings_view(self, request: Request):
+        gated = self._gate(request)
+        if isinstance(gated, Response):
+            return gated
+        user, sess = gated
+        from pyron.siteconfig import clean_site_values, load_site, save_site
+
+        fallback = self.title or (self.app.title if self.app else "Pyron")
+        site = load_site(self.engine, fallback=fallback)
+        error = ""
+        form = {
+            "name": site.name,
+            "tagline": site.tagline,
+            "phone": site.phone,
+            "email": site.email,
+            "hours": site.hours,
+            "address": site.address,
+            "website": site.website,
+        }
+        if request.method == "POST":
+            posted = await request.form()
+            csrf_err = self._check_csrf(request, sess, posted)
+            form = {key: str(posted.get(key) or "") for key in form}
+            if csrf_err:
+                error = csrf_err
+            else:
+                try:
+                    cleaned = clean_site_values(form, fallback=fallback)
+                    site = save_site(self.engine, cleaned)
+                    self._flash(sess, "ok", "settings_saved")
+                    return self._redirect("/settings", sess)
+                except ValueError as exc:
+                    error = str(exc)
+        return self._render(
+            request,
+            "settings.html",
+            {"nav": "settings", "error": error, "form": form, "site": site},
+            session=sess,
+            user=user,
+        )
+
+    async def preview_markdown(self, request: Request):
+        gated = self._gate(request)
+        if isinstance(gated, Response):
+            return gated
+        _user, sess = gated
+        posted = await request.form()
+        csrf_err = self._check_csrf(request, sess, posted)
+        if csrf_err:
+            from pyron.responses import HTMLResponse
+
+            return HTMLResponse(csrf_err, status_code=400)
+        from pyron.pages import render_page_body
+        from pyron.responses import HTMLResponse
+
+        html = render_page_body(str(posted.get("body") or ""))
+        if not html:
+            t = self._t(request)
+            html = f'<p class="empty">{t("preview_empty")}</p>'
+        return HTMLResponse(html)
 
     async def routes_view(self, request: Request):
         gated = self._gate(request)
@@ -812,13 +1014,18 @@ class AdminSite:
         self._require_perm(user, slug, "add")
         values, error = await self._bind_form(request, bound, None, sess)
         if request.method == "POST" and not error:
-            obj = bound.store.insert(bound.model, values, pk=bound.pk)
-            pk = getattr(obj, bound.pk)
-            self._log(user.username, "add", slug, pk, _obj_label(obj, bound))
-            self._flash(sess, "ok", "added_model", name=bound.name, pk=pk)
-            if str((await request.form()).get("intent") or "") == "continue":
-                return self._redirect(f"/m/{slug}/{pk}", sess)
-            return self._redirect(f"/m/{slug}", sess)
+            try:
+                obj = bound.store.insert(bound.model, values, pk=bound.pk)
+            except Exception as exc:
+                error = _save_error(exc) or error
+                obj = None
+            if obj is not None:
+                pk = getattr(obj, bound.pk)
+                self._log(user.username, "add", slug, pk, _obj_label(obj, bound))
+                self._flash(sess, "ok", "added_model", name=bound.name, pk=pk)
+                if str((await request.form()).get("intent") or "") == "continue":
+                    return self._redirect(f"/m/{slug}/{pk}", sess)
+                return self._redirect(f"/m/{slug}", sess)
         return self._render(
             request,
             "model_form.html",
@@ -830,6 +1037,7 @@ class AdminSite:
                 "fields": _form_fields(bound, values),
                 "pk": None,
                 "can_delete": False,
+                "view_url": None,
             },
             session=sess,
             user=user,
@@ -851,15 +1059,20 @@ class AdminSite:
             self._require_perm(user, slug, "change")
         values, error = await self._bind_form(request, bound, obj, sess)
         if request.method == "POST" and not error:
-            row = bound.store.update(bound.model, pk, values, pk=bound.pk)
-            self._log(user.username, "change", slug, pk, _obj_label(row, bound))
-            if bound.kind == "sql":
-                await self._save_inlines(request, bound, pk)
-            self._flash(sess, "ok", "saved_model", name=bound.name, pk=pk)
-            form = await request.form()
-            if str(form.get("intent") or "") == "continue":
-                return self._redirect(f"/m/{slug}/{pk}", sess)
-            return self._redirect(f"/m/{slug}", sess)
+            try:
+                row = bound.store.update(bound.model, pk, values, pk=bound.pk)
+            except Exception as exc:
+                error = _save_error(exc) or error
+                row = None
+            if row is not None:
+                self._log(user.username, "change", slug, pk, _obj_label(row, bound))
+                if bound.kind == "sql":
+                    await self._save_inlines(request, bound, pk)
+                self._flash(sess, "ok", "saved_model", name=bound.name, pk=pk)
+                form = await request.form()
+                if str(form.get("intent") or "") == "continue":
+                    return self._redirect(f"/m/{slug}/{pk}", sess)
+                return self._redirect(f"/m/{slug}", sess)
         return self._render(
             request,
             "model_form.html",
@@ -873,6 +1086,7 @@ class AdminSite:
                 "can_delete": bound.admin.can_delete and user.has_perm(f"{slug}.delete"),
                 "history": self._history(slug, pk),
                 "inline_blocks": self._inline_blocks(bound, pk),
+                "view_url": _view_url(bound, obj),
             },
             session=sess,
             user=user,
@@ -1132,6 +1346,13 @@ class AdminSite:
                 if spec["auto"] and spec["primary_key"]:
                     continue
                 values[spec["name"]] = getattr(obj, spec["name"], None)
+        else:
+            for spec in bound.fields:
+                if spec["auto"] and spec["primary_key"]:
+                    continue
+                default = _field_default(bound.model, spec["name"])
+                if default is not _UNSET:
+                    values[spec["name"]] = default
         if request.method != "POST":
             return values, ""
         form = await request.form()
@@ -1154,7 +1375,17 @@ class AdminSite:
                 errors.append(str(exc))
                 out[spec["name"]] = raw
         values.update(out)
-        return values, " ".join(errors)
+        if errors:
+            return values, " ".join(errors)
+        cleaner = getattr(bound.admin, "clean", None)
+        if callable(cleaner):
+            try:
+                cleaned = cleaner(values)
+                if isinstance(cleaned, dict):
+                    values = cleaned
+            except ValueError as exc:
+                return values, str(exc)
+        return values, ""
 
 
 def _qs(q: str, filters: dict[str, str], *, page: int | None = None) -> str:
@@ -1201,6 +1432,49 @@ def _obj_label(obj: Any, bound: _Bound) -> str:
     return f"#{getattr(obj, bound.pk)}"
 
 
+def _save_error(exc: BaseException) -> str | None:
+    msg = str(exc).lower()
+    if "unique" in msg or "integrity" in msg:
+        if "slug" in msg:
+            return "That slug is already used. Pick another."
+        return "That record already exists."
+    return None
+
+
+def _view_url(bound: _Bound, obj: Any) -> str | None:
+    fn = getattr(bound.admin, "view_on_site", None)
+    if not callable(fn) or obj is None:
+        return None
+    try:
+        url = fn(obj)
+    except Exception:
+        return None
+    return url if isinstance(url, str) and url.startswith("/") else None
+
+
+_UNSET = object()
+
+
+def _field_default(model: type, name: str) -> Any:
+    field = getattr(model, "model_fields", {}).get(name)
+    if field is None:
+        return _UNSET
+    factory = getattr(field, "default_factory", None)
+    if factory is not None:
+        try:
+            return factory()
+        except Exception:
+            return _UNSET
+    try:
+        from pydantic_core import PydanticUndefined
+    except Exception:
+        PydanticUndefined = object()
+    default = getattr(field, "default", PydanticUndefined)
+    if default is PydanticUndefined:
+        return _UNSET
+    return default
+
+
 def _form_fields(bound: _Bound, values: dict[str, Any], obj: Any | None = None) -> list[dict[str, Any]]:
     out = []
     for spec in bound.fields:
@@ -1212,6 +1486,10 @@ def _form_fields(bound: _Bound, values: dict[str, Any], obj: Any | None = None) 
         item = dict(spec)
         item["value"] = insp.form_value(value, spec["widget"])
         item["checked"] = bool(value) if spec["widget"] == "checkbox" else False
+        if spec["widget"] == "markdown":
+            from pyron.pages import render_page_body
+
+            item["preview_html"] = render_page_body(str(value or ""))
         out.append(item)
     return out
 

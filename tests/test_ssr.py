@@ -48,6 +48,9 @@ def test_init_ssr_is_one_model_html_and_api(tmp_path):
     css = (dest / "static" / "style.css").read_text(encoding="utf-8")
     assert "#c2410c" in css
     assert "Georgia" not in css
+    base = (dest / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "site_pages" in base
+    assert "/p/" in base
 
 
 def test_init_app_wizard_is_not_harbor(tmp_path, monkeypatch):

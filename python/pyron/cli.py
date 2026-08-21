@@ -104,7 +104,12 @@ def init_project(
             "Then:\n"
             "  http://127.0.0.1:8000        pages (HTML form + 10 records)\n"
             "  http://127.0.0.1:8000/docs   API\n"
-            + ("  http://127.0.0.1:8000/admin  panel (first visit creates root)\n" if label in {"ssr", "desk", "app"} else ""),
+            + (
+                "  http://127.0.0.1:8000/admin  panel (first visit creates root)\n"
+                "  http://127.0.0.1:8000/p/about  CMS page (edit under Pages)\n"
+                if label in {"ssr", "desk", "app"}
+                else ""
+            ),
             title=brief.title,
             border_style="red",
         )
@@ -129,6 +134,7 @@ def dev(
     console.print(f"  http://{host}:{port}/")
     console.print(f"  http://{host}:{port}/docs")
     console.print(f"  http://{host}:{port}/admin")
+    console.print(f"  http://{host}:{port}/p/about")
     from pyron.server import run
 
     run(
@@ -480,6 +486,7 @@ pyron dev
 - http://127.0.0.1:8000 — pages (add an item in the form)
 - http://127.0.0.1:8000/docs — API
 - http://127.0.0.1:8000/admin — panel (first visit creates root)
+- http://127.0.0.1:8000/p/about — CMS page (edit under Pages in /admin)
 
 If `sqlmodel` is missing: `python -m pip install "pyron[db]"`
 """

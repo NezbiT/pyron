@@ -85,6 +85,21 @@ _STOP = frozenset(
 
 _DOMAINS: list[tuple[tuple[str, ...], list[tuple[str, str]]]] = [
     (
+        ("store", "shop", "tienda", "product", "producto", "catalogo", "catálogo", "ecommerce", "e-commerce", "mercado", "venta"),
+        [
+            ("Canvas tote", "Heavy cotton, one pocket inside. Holds a laptop without sagging."),
+            ("Wool beanie", "Unstructured. Wash cold. The color that actually matches a black coat."),
+            ("Desk lamp", "Warm bulb included. Arm stays where you put it."),
+            ("Ceramic mug set", "Two cups. Thick rim. Safe in the dishwasher, not the microwave."),
+            ("Notebook A5", "Numbered pages, no dated planner. Lies flat."),
+            ("Leather card sleeve", "Three slots. Gets better scuffs, not worse ones."),
+            ("Linen tea towel", "One for the rail, one in the drawer. They look the same on purpose."),
+            ("Wall hook pair", "Brass. Screws in the bag. Holds a coat, not a bike."),
+            ("Daypack 18L", "No extra straps. Water bottle on the side that you can actually reach."),
+            ("Candle — cedar", "Burns even. Lid doubles as a coaster when it is out."),
+        ],
+    ),
+    (
         ("cafe", "coffee", "espresso", "bakery", "pastry", "menu", "dish", "food", "restaurant", "kitchen"),
         [
             ("House espresso", "The everyday cup. Pulls short, drinks well with milk."),
@@ -233,12 +248,14 @@ def _generic_seeds(brief: Brief) -> list[dict[str, str]]:
         ("Local {n}", "From this block, or as close as we can honestly claim."),
         ("Closing {n}", "Last on the list for a reason. Ask before it is gone."),
     ]
-    out = []
+    used: set[str] = set()
+    out: list[dict[str, str]] = []
     for i, (title_pat, desc_pat) in enumerate(patterns):
         hook = words[i % len(words)]
-        title = title_pat.format(n=noun)
-        if i % 2 == 1:
-            title = f"{hook.capitalize()} {noun}"
+        title = title_pat.format(n=noun) if i % 2 == 0 else f"{hook.capitalize()} {noun}"
+        if title.lower() in used:
+            title = f"{title} {i + 1}"
+        used.add(title.lower())
         out.append(
             {
                 "title": title[:200],
@@ -307,7 +324,7 @@ def _readme(brief: Brief, template: str) -> str:
 
 {brief.about}
 
-This is a Pyron ({template}) app. The home form, `/docs`, and `/admin` share the same `{brief.class_name}` table. Ten starter {brief.plural} are loaded on first run.
+This is a Pyron ({template}) app. The home form, `/docs`, and `/admin` share the same `{brief.class_name}` table. Ten starter {brief.plural} are loaded on first run. **Pages** in the admin become public views at `/p/about` (Jinja2).
 
 ```
 pyron dev
@@ -316,6 +333,7 @@ pyron dev
 - http://127.0.0.1:8000 — add a {brief.singular} in the form
 - http://127.0.0.1:8000/docs — JSON
 - http://127.0.0.1:8000/admin — panel (first visit creates root)
+- http://127.0.0.1:8000/p/about — CMS page (edit under Pages)
 
 If `sqlmodel` is missing: `python -m pip install "pyron[db]"`
 """
@@ -543,14 +561,17 @@ def _base_html(brief: Brief) -> str:
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>{{% block title %}}{t}{{% endblock %}}</title>
+  <title>{{% block title %}}{{{{ site.name if site and site.name else '{t}' }}}}{{% endblock %}}</title>
   <link rel="stylesheet" href="/static/style.css"/>
   {{% block head %}}{{% endblock %}}
 </head>
 <body>
   <header class="site-header">
-    <a class="mark" href="/">{t}</a>
+    <a class="mark" href="/">{{{{ site.name if site and site.name else '{t}' }}}}</a>
     <nav>
+      {{% for p in site_pages %}}
+        <a href="/p/{{{{ p.slug }}}}" {{% if request and request.url.path == '/p/' ~ p.slug %}}aria-current="page"{{% endif %}}>{{{{ p.title }}}}</a>
+      {{% endfor %}}
       <a href="/docs">API</a>
       <a href="/admin">Admin</a>
     </nav>
@@ -561,6 +582,14 @@ def _base_html(brief: Brief) -> str:
     {{% endif %}}
     {{% block content %}}{{% endblock %}}
   </main>
+  {{% if site and (site.phone or site.hours or site.address or site.email) %}}
+  <footer class="site-footer">
+    {{% if site.phone %}}<a href="{{{{ site.phone_href }}}}">{{{{ site.phone }}}}</a>{{% endif %}}
+    {{% if site.email %}}<a href="mailto:{{{{ site.email }}}}">{{{{ site.email }}}}</a>{{% endif %}}
+    {{% if site.hours %}}<span>{{{{ site.hours }}}}</span>{{% endif %}}
+    {{% if site.address %}}<span>{{{{ site.address }}}}</span>{{% endif %}}
+  </footer>
+  {{% endif %}}
 </body>
 </html>
 """
@@ -571,7 +600,7 @@ def _index_html(brief: Brief) -> str:
 {{% block title %}}{_html(brief.plural)}{{% endblock %}}
 {{% block content %}}
   <h1>{_html(brief.plural)}</h1>
-  <p class="lede">{_html(brief.about)} This page, <a href="/docs">/docs</a>, and <a href="/admin">/admin</a> share the same table.</p>
+  <p class="lede">{_html(brief.about)} This page, <a href="/docs">/docs</a>, and <a href="/admin">/admin</a> share the same table. Add About or Contact under <strong>Pages</strong> in the admin — Jinja2 renders them at <code>/p/…</code>.</p>
   <form method="post" action="/" class="stack">
     <div class="field">
       <label for="title">Title</label>
@@ -636,10 +665,13 @@ _CSS = """:root {
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
-.site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card); }
+.site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card); gap: 1rem; flex-wrap: wrap; }
 .mark { font-weight: 700; color: var(--ember); text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; }
-nav { display: flex; gap: 1rem; }
-nav a { color: var(--ink); min-height: 44px; display: inline-flex; align-items: center; }
+nav { display: flex; gap: 0.75rem 1rem; flex-wrap: wrap; }
+nav a { color: var(--ink); min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
+nav a[aria-current="page"] { color: var(--ember); font-weight: 600; }
+.page-body p { margin: 0 0 1rem; }
+.page-article h1 { margin: 0 0 0.8rem; }
 main { max-width: 36rem; margin: 2.2rem auto; padding: 0 1.5rem 3rem; }
 h1 { font-size: 1.8rem; margin: 0 0 0.35rem; }
 .lede { color: var(--muted); margin: 0 0 1.4rem; }
@@ -662,6 +694,8 @@ h1 { font-size: 1.8rem; margin: 0 0 0.35rem; }
 .flash { padding: 0.65rem 0.9rem; margin: 0 0 1rem; border: 1px solid #2e7d32; background: #f0fdf4; }
 .flash-err { border-color: var(--ember); background: #fff4ed; }
 code { font-family: ui-monospace, "JetBrains Mono", Consolas, monospace; font-size: 0.9em; }
+.site-footer { max-width: 36rem; margin: 0 auto; padding: 1.2rem 1.5rem 2.4rem; color: var(--muted); font-size: 0.92rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; }
+.site-footer a { min-height: 44px; display: inline-flex; align-items: center; }
 """
 
 _PKG_JSON = """{

@@ -97,4 +97,33 @@
       }
     });
   } catch (err) {}
+
+  var ta = document.querySelector("[data-md-preview]");
+  var out = document.querySelector("[data-md-output]");
+  if (ta && out) {
+    var csrf = document.querySelector('input[name="csrf"]');
+    var timer = 0;
+    function paint(html) {
+      out.innerHTML = html || "";
+    }
+    function preview() {
+      var body = new FormData();
+      if (csrf) body.append("csrf", csrf.value);
+      body.append("body", ta.value);
+      fetch(prefix + "/preview-markdown", {
+        method: "POST",
+        body: body,
+        credentials: "same-origin",
+      })
+        .then(function (r) {
+          return r.text();
+        })
+        .then(paint)
+        .catch(function () {});
+    }
+    ta.addEventListener("input", function () {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(preview, 280);
+    });
+  }
 })();

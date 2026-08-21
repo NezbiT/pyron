@@ -23,7 +23,7 @@ async def delete_book(book_id: int):
 
 - **Root** (`is_root=True`) passes every permission check.
 - **Staff** (group `staff`, created automatically) get `view`, `add`, and `change` on each registered table — **not** `delete`.
-- Codename: `{slug}.{action}` e.g. `book.delete`, `widget.view`.
+- Codename: `{slug}.{action}` e.g. `book.delete`, `widget.view`. Built-in CMS pages use `pages.view` / `pages.add` / `pages.change`.
 
 ## Responses (say what happened and what to do)
 

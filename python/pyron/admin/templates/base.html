@@ -41,9 +41,14 @@
         {% if user.is_root %}
         <a href="{{ prefix }}/users" {% if nav == "users" %}aria-current="page"{% endif %}>{{ t('users') }}</a>
         {% endif %}
-        <p class="nav-label">{{ t('tables') }}</p>
-        {% if models %}
-          {% for m in models %}
+        <p class="nav-label">{{ t('site') }}</p>
+        {% for m in site_models %}
+          <a href="{{ prefix }}/m/{{ m.slug }}" {% if nav == "m:" + m.slug %}aria-current="page"{% endif %}>{{ m.plural }}</a>
+        {% endfor %}
+        <a href="{{ prefix }}/settings" {% if nav == "settings" %}aria-current="page"{% endif %}>{{ t('settings') }}</a>
+        <p class="nav-label">{{ t('data') }}</p>
+        {% if data_models %}
+          {% for m in data_models %}
             <a href="{{ prefix }}/m/{{ m.slug }}" {% if nav == "m:" + m.slug %}aria-current="page"{% endif %}>{{ m.plural }}</a>
           {% endfor %}
         {% else %}

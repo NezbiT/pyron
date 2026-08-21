@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% block title %}{{ page.title if page is defined else (site.name if site and site.name else "Pyron") }}{% endblock %}</title>
+  <style>
+    :root { --ink:#1a1a1a; --paper:#f7f8fa; --ember:#c2410c; --muted:#6c707e; --line:#d3d5db; --card:#fff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
+    .site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card); gap: 1rem; flex-wrap: wrap; }
+    .mark { font-weight: 700; color: var(--ember); text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; }
+    nav { display: flex; gap: 0.75rem 1rem; flex-wrap: wrap; }
+    nav a { color: var(--ink); min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
+    nav a[aria-current="page"] { color: var(--ember); font-weight: 600; }
+    main { max-width: 40rem; margin: 2.2rem auto; padding: 0 1.5rem 3rem; }
+    h1 { font-size: 1.8rem; margin: 0 0 0.8rem; }
+    .page-body p { margin: 0 0 1rem; }
+    .empty { color: var(--muted); }
+    a { color: var(--ember); }
+    .site-footer { max-width: 40rem; margin: 0 auto; padding: 1.2rem 1.5rem 2.4rem; color: var(--muted); font-size: 0.92rem; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; }
+    .site-footer a { min-height: 44px; display: inline-flex; align-items: center; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% elif desk_title is defined %}{{ desk_title }}{% else %}Pyron{% endif %}</a>
+    <nav aria-label="Primary">
+      {% for p in site_pages %}
+        <a href="/p/{{ p.slug }}" {% if page is defined and page.slug == p.slug %}aria-current="page"{% endif %}>{{ p.title }}</a>
+      {% endfor %}
+      <a href="/docs">API</a>
+      <a href="/admin">Admin</a>
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  {% if site and (site.phone or site.hours or site.address or site.email) %}
+  <footer class="site-footer">
+    {% if site.phone %}<a href="{{ site.phone_href }}">{{ site.phone }}</a>{% endif %}
+    {% if site.email %}<a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}
+    {% if site.hours %}<span>{{ site.hours }}</span>{% endif %}
+    {% if site.address %}<span>{{ site.address }}</span>{% endif %}
+  </footer>
+  {% endif %}
+</body>
+</html>

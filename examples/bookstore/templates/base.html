@@ -10,11 +10,14 @@
 <body>
   <a class="skip" href="#content">Skip to content</a>
   <header class="site-header">
-    <a class="mark" href="/">Harbor <span>Bindings</span></a>
+    <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% else %}Harbor <span>Bindings</span>{% endif %}</a>
     <nav aria-label="Primary">
       <a href="/" {% if page == "home" %}aria-current="page"{% endif %}>Shop</a>
       <a href="/catalog" {% if page == "catalog" %}aria-current="page"{% endif %}>Catalog</a>
       <a href="/acquire" {% if page == "acquire" %}aria-current="page"{% endif %}>Sell a book</a>
+      {% for p in site_pages %}
+        <a href="/p/{{ p.slug }}" {% if request.url.path == '/p/' ~ p.slug %}aria-current="page"{% endif %}>{{ p.title }}</a>
+      {% endfor %}
       <a href="/docs">API</a>
       <a href="/admin">Admin panel</a>
     </nav>
@@ -23,7 +26,15 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
-    <p>Open Tuesday–Saturday, 11–6. The door sticks when it rains — pull harder.</p>
+    {% if site and (site.phone or site.hours or site.address) %}
+      <p>
+        {% if site.phone %}<a href="{{ site.phone_href }}">{{ site.phone }}</a>{% endif %}
+        {% if site.hours %} · {{ site.hours }}{% endif %}
+        {% if site.address %} · {{ site.address }}{% endif %}
+      </p>
+    {% else %}
+      <p>Open Tuesday–Saturday, 11–6. The door sticks when it rains — pull harder.</p>
+    {% endif %}
     <p><a href="/health">System</a> · <a href="/redoc">ReDoc</a></p>
   </footer>
 </body>

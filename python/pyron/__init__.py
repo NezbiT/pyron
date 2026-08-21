@@ -36,6 +36,7 @@ __all__ = [
     "GZipMiddleware",
     "MemoryStore",
     "ModelAdmin",
+    "Page",
     "TabularInline",
     "cache",
     "mongo_client",
@@ -70,3 +71,11 @@ __all__ = [
     "validate",
     "__version__",
 ]
+
+
+def __getattr__(name: str):
+    if name == "Page":
+        from pyron.pages import Page
+
+        return Page
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

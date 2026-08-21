@@ -49,6 +49,9 @@ def field_specs(model: type, *, exclude: list[str] | None = None) -> list[dict[s
         ann = python_type(field.annotation)
         required = field.is_required()
         has_factory = field.default_factory is not None
+        widget = _widget(ann, name, field)
+        if getattr(model, "__tablename__", None) == "pyron_page" and name == "body":
+            widget = "markdown"
         specs.append(
             {
                 "name": name,
@@ -58,7 +61,7 @@ def field_specs(model: type, *, exclude: list[str] | None = None) -> list[dict[s
                 "primary_key": name == pk,
                 "readonly": name == pk,
                 "auto": name == pk or has_factory,
-                "widget": _widget(ann, name, field),
+                "widget": widget,
                 "help": _help(field),
             }
         )
@@ -66,6 +69,9 @@ def field_specs(model: type, *, exclude: list[str] | None = None) -> list[dict[s
 
 
 def _widget(ann: type, name: str, field: Any) -> str:
+    extra = getattr(field, "json_schema_extra", None) or {}
+    if isinstance(extra, dict) and extra.get("widget"):
+        return str(extra["widget"])
     if ann is bool:
         return "checkbox"
     if ann in (int, float):
@@ -75,7 +81,6 @@ def _widget(ann: type, name: str, field: Any) -> str:
     if ann is date:
         return "date"
     max_len = None
-    extra = getattr(field, "json_schema_extra", None) or {}
     if isinstance(extra, dict):
         max_len = extra.get("max_length")
     meta = getattr(field, "metadata", None) or ()

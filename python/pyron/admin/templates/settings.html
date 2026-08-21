@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ t('settings') }}{% endblock %}
+{% block crumb %}{{ t('settings') }}{% endblock %}
+{% block content %}
+  <h1>{{ t('settings') }}</h1>
+  <p class="lede">{{ t('settings_lede') }}</p>
+  {% if error %}
+    <p class="banner" role="alert">{{ error }}</p>
+  {% endif %}
+  <form method="post" class="settings-form" novalidate>
+    <input type="hidden" name="csrf" value="{{ csrf }}"/>
+
+    <fieldset class="group">
+      <legend>{{ t('identity') }}</legend>
+      <div class="field">
+        <label for="name">{{ t('field_name') }}</label>
+        <input id="name" name="name" value="{{ form.name }}" maxlength="120" autocomplete="organization" required/>
+      </div>
+      <div class="field">
+        <label for="tagline">{{ t('field_tagline') }}</label>
+        <input id="tagline" name="tagline" value="{{ form.tagline }}" maxlength="200" autocomplete="off"/>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>{{ t('contact_group') }}</legend>
+      <div class="field">
+        <label for="phone">{{ t('field_phone') }}</label>
+        <input id="phone" name="phone" type="tel" value="{{ form.phone }}" maxlength="40" autocomplete="tel"/>
+      </div>
+      <div class="field">
+        <label for="email">{{ t('field_email') }}</label>
+        <input id="email" name="email" value="{{ form.email }}" maxlength="120" autocomplete="email" inputmode="email"/>
+      </div>
+      <div class="field">
+        <label for="hours">{{ t('field_hours') }}</label>
+        <input id="hours" name="hours" value="{{ form.hours }}" maxlength="200" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label for="address">{{ t('field_address') }}</label>
+        <input id="address" name="address" value="{{ form.address }}" maxlength="200" autocomplete="street-address"/>
+      </div>
+      <div class="field">
+        <label for="website">{{ t('field_website') }}</label>
+        <input id="website" name="website" value="{{ form.website }}" maxlength="200" autocomplete="url"/>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button class="btn" type="submit">{{ t('save_settings') }}</button>
+    </div>
+  </form>
+{% endblock %}

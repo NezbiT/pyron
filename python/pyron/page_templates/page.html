@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+  <article class="page-article">
+    <h1>{{ page.title }}</h1>
+    {% if page.html %}
+      <div class="page-body">{{ page.html | safe }}</div>
+    {% elif page.body %}
+      <div class="page-body">{{ page.body | safe }}</div>
+    {% else %}
+      <p class="empty">Nothing is written here yet.</p>
+    {% endif %}
+  </article>
+{% endblock %}

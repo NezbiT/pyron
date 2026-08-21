@@ -47,6 +47,7 @@ class Pyron:
         admin_engine: Any = None,
         admin_mongo: Any = None,
         admin_path: str = "/admin",
+        pages: bool = True,
         settings: Any = None,
     ) -> None:
         self.title = title
@@ -97,6 +98,7 @@ class Pyron:
                 path=admin_path,
                 engine=admin_engine,
                 mongo=admin_mongo,
+                pages=pages,
             )
 
     def enable(self, feature: str, **kwargs: Any) -> Any:
@@ -107,6 +109,7 @@ class Pyron:
                     engine=kwargs.get("engine"),
                     mongo=kwargs.get("mongo"),
                     path=kwargs.get("path", "/admin"),
+                    pages=kwargs.get("pages", True),
                 )
             if kwargs.get("engine") is not None:
                 self.admin.bind(kwargs["engine"])
@@ -181,12 +184,13 @@ class Pyron:
         path: str = "/admin",
         engine: Any = None,
         mongo: Any = None,
+        pages: bool = True,
     ) -> Any:
         """Mount the visual desk at `path` (Django-style admin)."""
         from pyron.admin import AdminSite
 
         if site is None or site is True:
-            site = AdminSite(engine=engine, title=self.title, mongo=mongo)
+            site = AdminSite(engine=engine, title=self.title, mongo=mongo, pages=pages)
         else:
             if engine is not None:
                 site.bind(engine)

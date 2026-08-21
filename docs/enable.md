@@ -24,4 +24,6 @@ In code:
 app.enable("admin", engine=engine)
 ```
 
+That also registers **Pages** and **Settings**. Operators add About / Contact in `/admin`; Jinja2 renders them at `/p/{slug}`. Site name, phone, and hours live under Settings. To skip Pages: `app.enable("admin", engine=engine, pages=False)` or `Pyron(admin=True, pages=False)`.
+
 `app.enable("unknown")` raises `ValueError`. Known: `admin`, `mongo`, `redis`.

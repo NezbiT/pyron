@@ -4,13 +4,16 @@
 {% block crumb %}<a href="{{ prefix }}/m/{{ bound.slug }}">{{ bound.plural }}</a> / {% if creating %}{{ t('new') }}{% else %}#{{ pk }}{% endif %}{% endblock %}
 {% block content %}
   <h1>{% if creating %}{{ t('add_model', name=bound.name) }}{% else %}{{ t('edit_model', name=bound.name, pk=pk) }}{% endif %}</h1>
+  {% if view_url %}
+    <p class="view-on-site"><a href="{{ view_url }}">{{ t('view_on_site') }}</a></p>
+  {% endif %}
   {% if error %}
     <p class="banner" role="alert">{{ error }}</p>
   {% endif %}
   <form method="post" novalidate>
     <input type="hidden" name="csrf" value="{{ csrf }}"/>
     {% for f in fields %}
-      {{ desk_input(f, f.name) }}
+      {{ desk_input(f, f.name, t) }}
     {% endfor %}
 
     {% if inline_blocks %}
@@ -22,7 +25,7 @@
               <legend>{{ t('inline_row') }} #{{ item.pk }}</legend>
               {% for f in item.fields %}
                 {% if f.name != block.fk and not f.primary_key %}
-                  {{ desk_input(f, 'inline-' ~ block.slug ~ '-' ~ item.pk ~ '-' ~ f.name) }}
+                  {{ desk_input(f, 'inline-' ~ block.slug ~ '-' ~ item.pk ~ '-' ~ f.name, t) }}
                 {% endif %}
               {% endfor %}
               <div class="field check">
@@ -36,7 +39,7 @@
               <legend>{{ t('inline_new') }}</legend>
               {% for f in block.blank_fields %}
                 {% if f.name != block.fk and not f.primary_key %}
-                  {{ desk_input(f, 'inline-' ~ block.slug ~ '-new' ~ i ~ '-' ~ f.name) }}
+                  {{ desk_input(f, 'inline-' ~ block.slug ~ '-new' ~ i ~ '-' ~ f.name, t) }}
                 {% endif %}
               {% endfor %}
             </fieldset>

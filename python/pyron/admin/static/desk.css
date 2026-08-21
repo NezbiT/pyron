@@ -285,6 +285,56 @@ td { max-width: 24rem; overflow-wrap: anywhere; }
 .field.check input { width: auto; margin-top: 0.3rem; min-width: 1.1rem; min-height: 1.1rem; }
 .field.check label { font-weight: 500; margin: 0; }
 .hint { color: var(--muted); font-size: 0.92rem; margin: 0.3rem 0 0; }
+.group {
+  border: 0;
+  margin: 1.4rem 0 0;
+  padding: 0;
+  min-width: 0;
+}
+.group legend {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.md-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+.md-split textarea {
+  min-height: 16rem;
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.md-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.md-preview {
+  min-height: 16rem;
+  max-height: 28rem;
+  overflow: auto;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+.md-preview p:first-child { margin-top: 0; }
+.md-preview .empty { color: var(--muted); margin: 0; }
+.settings-form { max-width: 36rem; }
+@media (max-width: 52rem) {
+  .md-split { grid-template-columns: 1fr; }
+}
+.view-on-site { margin: 0 0 1rem; }
+.view-on-site a { display: inline-flex; align-items: center; min-height: 44px; }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.2rem; }
 .banner {
   border: 1px solid var(--ember);

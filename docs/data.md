@@ -34,8 +34,8 @@ Operators (`pyron_user`) stay on SQL in 0.6.
 from pyron import Document, ModelAdmin, Pyron
 from pyron.db import create_engine, mongo_client
 
-class Page(Document):
-    collection = "pages"
+class Article(Document):
+    collection = "articles"
     title: str
     body: str = ""
 
@@ -43,7 +43,7 @@ engine = create_engine()
 mongo = mongo_client()  # MONGO_URL
 
 app = Pyron(admin=True, admin_engine=engine, admin_mongo=mongo)
-app.admin.register(Page)
+app.admin.register(Article)
 ```
 
 ```
@@ -56,9 +56,9 @@ Same Desk screens as SQL tables. The card shows `mongo`. Inlines stay SQL-only.
 You can still use the pymongo client in handlers:
 
 ```python
-@app.get("/pages/{page_id}")
-async def get_page(page_id: str):
-    doc = mongo["pyron"].pages.find_one({"_id": page_id})
+@app.get("/articles/{article_id}")
+async def get_article(article_id: str):
+    doc = mongo["pyron"].articles.find_one({"_id": article_id})
     ...
 ```
 
