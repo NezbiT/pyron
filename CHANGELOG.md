@@ -2,6 +2,10 @@
 
 How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
+## 0.7.2 — 2026-08-21
+
+GitHub Pages: enable Actions as the source (`build_type=workflow`). Docs workflow uses checkout@v5 and setup-python@v6 (Node 24).
+
 ## 0.7.1 — 2026-08-21
 
 `pyron init app` asks for the project name, what it is about, and what people add. It generates a unique app (form, API, admin) and **10 starter records** for that topic — not a Harbor Bindings copy.

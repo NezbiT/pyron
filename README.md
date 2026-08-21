@@ -133,4 +133,4 @@ cargo test --lib
 
 ## Status
 
-v0.7.1. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).
+v0.7.2. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).
