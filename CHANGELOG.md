@@ -2,7 +2,7 @@
 
 How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
-A user-facing change is unfinished until this file **and** the matching `docs/*.md` are updated in the same commit (plus README / scaffold copy when that surface is listed there). See `AGENTS.md` and [Contributing](docs/contributing.md).
+A user-facing change is unfinished until this file **and** the matching `docs/*.md` are updated in the same commit (plus README / scaffold copy when that surface is listed there). See `AGENTS.md` and [Contributing](contributing.md). HTML copy of this log: https://nezbit.github.io/pyron/changelog/
 
 ## 0.10.0 — 2026-08-21
 
@@ -13,6 +13,7 @@ Small polish before calling this a 0.10.
 - Page slug fills from the title until you edit the slug yourself.
 - Public header shows `site.tagline` when set.
 - `pyron init` / `pyron dev` print `/admin/settings`.
+- Changelog links to other docs use MkDocs paths (`admin.md`, not `docs/admin.md`) so the site build stays clean.
 
 ## 0.9.0 — 2026-08-21
 
@@ -22,7 +23,7 @@ Operate the site from the admin panel, not only the SQL tables.
 - **Settings**: name, tagline, phone, email, hours, address, website. Public header/footer read `site`.
 - **Pages** body is Markdown, with a live preview. Legacy HTML bodies still render. Jinja in the body stays text.
 - Phone in the public footer is a `tel:` link.
-- Docs: [Settings](docs/admin.md#settings), CLI, comparison, enable, security, architecture, README, example bookstore. Docs ship in the same commit as the feature ([Contributing](docs/contributing.md)).
+- Docs: [Settings](admin.md#settings), CLI, comparison, enable, security, architecture, README, example bookstore. Docs ship in the same commit as the feature ([Contributing](contributing.md)).
 
 ## 0.8.0 — 2026-08-21
 
@@ -33,7 +34,7 @@ CMS pages on the admin panel, rendered by Jinja2.
 - First run seeds **About** and **Contact**. Published pages with “in nav” show in the public header (`site_pages`).
 - Operators can preview unpublished pages while signed in; visitors get 404.
 - `Pyron(..., pages=False)` turns the built-in pages off.
-- Docs: [Admin — Pages](docs/admin.md#pages-cms), quickstart, enable, CLI, security, comparison, architecture, README, example bookstore. `pyron init` / `pyron dev` print `/p/about`.
+- Docs: [Admin — Pages](admin.md#pages-cms), quickstart, enable, CLI, security, comparison, architecture, README, example bookstore. `pyron init` / `pyron dev` print `/p/about`.
 
 ## 0.7.2 — 2026-08-21
 

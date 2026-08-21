@@ -9,6 +9,6 @@ A change is **not done** until documentation is updated. Docs are part of the sa
 3. `README.md` when the feature is on the homepage path (`pyron init`, `/admin`, `/p/…`, Settings, extras).
 4. Generated copy: `scaffold.py` READMEs, `cli.py` “Next” URLs, `examples/*/README.md` if the example gained a surface.
 
-`docs/changelog.md` includes `CHANGELOG.md`. The docs site is MkDocs; keep headings stable so existing links still work.
+`docs/changelog.md` includes `CHANGELOG.md`. The docs site is MkDocs; keep headings stable so existing links still work. In `CHANGELOG.md`, link other pages as MkDocs paths (`admin.md#settings`, `contributing.md`) — not `docs/admin.md`, or the site build warns that the target is missing.
 
 If you only changed code, you are not finished.
