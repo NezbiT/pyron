@@ -9,7 +9,9 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 ui-sans-serif, system-ui, sans-serif; }
     .site-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); background: var(--card); gap: 1rem; flex-wrap: wrap; }
+    .brand-block { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .mark { font-weight: 700; color: var(--ember); text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem; }
+    .tagline { margin: 0; color: var(--muted); font-size: 0.88rem; }
     nav { display: flex; gap: 0.75rem 1rem; flex-wrap: wrap; }
     nav a { color: var(--ink); min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
     nav a[aria-current="page"] { color: var(--ember); font-weight: 600; }
@@ -25,7 +27,10 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% elif desk_title is defined %}{{ desk_title }}{% else %}Pyron{% endif %}</a>
+    <div class="brand-block">
+      <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% elif desk_title is defined %}{{ desk_title }}{% else %}Pyron{% endif %}</a>
+      {% if site and site.tagline %}<p class="tagline">{{ site.tagline }}</p>{% endif %}
+    </div>
     <nav aria-label="Primary">
       {% for p in site_pages %}
         <a href="/p/{{ p.slug }}" {% if page is defined and page.slug == p.slug %}aria-current="page"{% endif %}>{{ p.title }}</a>

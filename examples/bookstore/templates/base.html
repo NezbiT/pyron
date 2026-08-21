@@ -10,7 +10,10 @@
 <body>
   <a class="skip" href="#content">Skip to content</a>
   <header class="site-header">
-    <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% else %}Harbor <span>Bindings</span>{% endif %}</a>
+    <div class="brand-block">
+      <a class="mark" href="/">{% if site and site.name %}{{ site.name }}{% else %}Harbor <span>Bindings</span>{% endif %}</a>
+      {% if site and site.tagline %}<p class="tagline">{{ site.tagline }}</p>{% endif %}
+    </div>
     <nav aria-label="Primary">
       <a href="/" {% if page == "home" %}aria-current="page"{% endif %}>Shop</a>
       <a href="/catalog" {% if page == "catalog" %}aria-current="page"{% endif %}>Catalog</a>

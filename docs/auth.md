@@ -1,4 +1,4 @@
-# Auth and permissions (0.4)
+# Auth and permissions
 
 The same signed-in user is visible to the **API** and the **admin panel**. Routes without a decorator stay public.
 

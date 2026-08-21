@@ -38,7 +38,7 @@ Then open http://127.0.0.1:8000/admin
 
 ## Pages (CMS)
 
-When the panel is on, **Pages** is already there. You do not register a model for About / Contact / Hours.
+When the panel is on, **Pages** is already there. You do not register a model for About or Contact. Hours and the shop name live in **Settings**.
 
 1. Open `/admin` → **Pages** → **Add Page**.
 2. Title, slug (`about` → public URL `/p/about`), Markdown body (preview on the right).
@@ -48,7 +48,7 @@ The body is Markdown (`**bold**`, lists, `[text](https://…)`). Legacy HTML (a 
 
 ## Settings
 
-`/admin/settings` is a single form: site name, tagline, phone, email, hours, address, website. The public header uses `site.name`. The footer uses phone (`tel:`), email, hours, and address when they are set.
+`/admin/settings` is a single form: site name, tagline, phone, email, hours, address, website. The public header uses `site.name` and `site.tagline`. The footer uses phone (`tel:`), email, hours, and address when they are set.
 
 ```html
 <a class="mark" href="/">{{ site.name }}</a>

@@ -32,6 +32,7 @@ a:hover { color: var(--ember); }
 }
 .site-header { border-bottom: 1px solid var(--line); }
 .site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; margin-top: 3rem; }
+.brand-block { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .mark {
   text-decoration: none;
   color: var(--ink);
@@ -39,6 +40,7 @@ a:hover { color: var(--ember); }
   letter-spacing: 0.02em;
 }
 .mark span { color: var(--ember); }
+.tagline { margin: 0; color: var(--muted); font-size: 0.95rem; }
 nav { display: flex; gap: 1.25rem; }
 nav a { text-decoration: none; color: var(--ink); }
 nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.3em; }

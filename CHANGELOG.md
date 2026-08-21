@@ -4,6 +4,16 @@ How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
 A user-facing change is unfinished until this file **and** the matching `docs/*.md` are updated in the same commit (plus README / scaffold copy when that surface is listed there). See `AGENTS.md` and [Contributing](docs/contributing.md).
 
+## 0.10.0 — 2026-08-21
+
+Small polish before calling this a 0.10.
+
+- Version strings were still 0.7.x in the README and bookstore example; they follow the package now.
+- First-run flash tells you to open **Settings** or **Pages**.
+- Page slug fills from the title until you edit the slug yourself.
+- Public header shows `site.tagline` when set.
+- `pyron init` / `pyron dev` print `/admin/settings`.
+
 ## 0.9.0 — 2026-08-21
 
 Operate the site from the admin panel, not only the SQL tables.

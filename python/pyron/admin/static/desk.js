@@ -126,4 +126,18 @@
       timer = window.setTimeout(preview, 280);
     });
   }
+
+  var titleEl = document.getElementById("title");
+  var slugEl = document.getElementById("slug");
+  if (titleEl && slugEl && ta) {
+    var slugTouched = slugEl.value.length > 0;
+    slugEl.addEventListener("input", function () {
+      slugTouched = true;
+    });
+    titleEl.addEventListener("input", function () {
+      if (slugTouched) return;
+      var raw = (titleEl.value || "").toLowerCase().trim();
+      slugEl.value = raw.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+    });
+  }
 })();

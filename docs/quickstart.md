@@ -18,6 +18,7 @@ pyron dev
 - http://127.0.0.1:8000/docs — the same row as JSON
 - http://127.0.0.1:8000/admin — the same row in the panel (first visit creates root)
 - http://127.0.0.1:8000/p/about — a CMS page; add more under **Pages** in `/admin`. Jinja2 renders them.
+- http://127.0.0.1:8000/admin/settings — site name, phone, hours
 
 ```python
 from pyron import Form, redirect

@@ -50,7 +50,7 @@ cd <folder>
 pyron dev
 ```
 
-Open http://127.0.0.1:8000 — add an item in the form. Same row appears in `/docs` and `/admin`. **Pages** in the panel become public views at `/p/about` (Jinja2).
+Open http://127.0.0.1:8000 — add an item in the form. Same row appears in `/docs` and `/admin`. **Pages** become `/p/about`. **Settings** is the shop name, phone, and hours.
 
 ## 30-second API only
 
@@ -133,4 +133,4 @@ cargo test --lib
 
 ## Status
 
-v0.7.2. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs/auth.md](docs/auth.md) · [docs/admin.md](docs/admin.md) · [docs/data.md](docs/data.md).
+v0.10.0. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs](https://nezbit.github.io/pyron/).

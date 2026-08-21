@@ -29,7 +29,8 @@ def pages_app(tmp_path, monkeypatch):
         redoc_url=None,
     )
     (tmp_path / "base.html").write_text(
-        "<html><body><p class='brand'>{{ site.name }}</p><nav>{% for p in site_pages %}"
+        "<html><body><p class='brand'>{{ site.name }}</p>"
+        "{% if site.tagline %}<p class='tagline'>{{ site.tagline }}</p>{% endif %}<nav>{% for p in site_pages %}"
         '<a href="/p/{{ p.slug }}">{{ p.title }}</a>{% endfor %}</nav>'
         "{% block content %}{% endblock %}"
         "{% if site and site.phone %}<a href='{{ site.phone_href }}'>{{ site.phone }}</a>{% endif %}"
@@ -259,6 +260,7 @@ async def test_settings_show_on_the_public_site(pages_app):
         assert "Harbor Bindings" in saved.text
         about = await client.get("/p/about")
         assert "Harbor Bindings" in about.text
+        assert "Used books" in about.text
         assert "tel:2815550134" in about.text
         assert "(281) 555-0134" in about.text
 

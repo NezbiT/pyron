@@ -334,6 +334,7 @@ pyron dev
 - http://127.0.0.1:8000/docs — JSON
 - http://127.0.0.1:8000/admin — panel (first visit creates root)
 - http://127.0.0.1:8000/p/about — CMS page (edit under Pages)
+- http://127.0.0.1:8000/admin/settings — name, phone, hours
 
 If `sqlmodel` is missing: `python -m pip install "pyron[db]"`
 """
@@ -567,7 +568,10 @@ def _base_html(brief: Brief) -> str:
 </head>
 <body>
   <header class="site-header">
-    <a class="mark" href="/">{{{{ site.name if site and site.name else '{t}' }}}}</a>
+    <div class="brand-block">
+      <a class="mark" href="/">{{{{ site.name if site and site.name else '{t}' }}}}</a>
+      {{% if site and site.tagline %}}<p class="tagline">{{{{ site.tagline }}}}</p>{{% endif %}}
+    </div>
     <nav>
       {{% for p in site_pages %}}
         <a href="/p/{{{{ p.slug }}}}" {{% if request and request.url.path == '/p/' ~ p.slug %}}aria-current="page"{{% endif %}}>{{{{ p.title }}}}</a>
@@ -694,6 +698,8 @@ h1 { font-size: 1.8rem; margin: 0 0 0.35rem; }
 .flash { padding: 0.65rem 0.9rem; margin: 0 0 1rem; border: 1px solid #2e7d32; background: #f0fdf4; }
 .flash-err { border-color: var(--ember); background: #fff4ed; }
 code { font-family: ui-monospace, "JetBrains Mono", Consolas, monospace; font-size: 0.9em; }
+.brand-block { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.tagline { margin: 0; color: var(--muted); font-size: 0.88rem; }
 .site-footer { max-width: 36rem; margin: 0 auto; padding: 1.2rem 1.5rem 2.4rem; color: var(--muted); font-size: 0.92rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; }
 .site-footer a { min-height: 44px; display: inline-flex; align-items: center; }
 """

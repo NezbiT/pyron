@@ -51,6 +51,8 @@ def test_init_ssr_is_one_model_html_and_api(tmp_path):
     base = (dest / "templates" / "base.html").read_text(encoding="utf-8")
     assert "site_pages" in base
     assert "/p/" in base
+    assert "site.tagline" in base
+    assert "/admin/settings" in (dest / "README.md").read_text(encoding="utf-8")
 
 
 def test_init_app_wizard_is_not_harbor(tmp_path, monkeypatch):

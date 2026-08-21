@@ -66,7 +66,7 @@ Pyron is a hybrid web framework: **Python** for handlers and the product surface
 | What changed | [Changelog](changelog.md) |
 | How we keep docs in sync | [Contributing](contributing.md) |
 
-The example shop is `examples/bookstore`: public catalog, JSON API, admin panel, and CMS pages (`/p/about`) on the same process.
+The example shop is `examples/bookstore`: public catalog, JSON API, admin panel, CMS pages (`/p/about`), and Settings on the same process.
 
 ```bash
 cd examples/bookstore
