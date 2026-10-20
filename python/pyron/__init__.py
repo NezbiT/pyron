@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pyron._version import __version__
 from pyron._bridge import CORE, core_kind, dumps, dumps_batch, loads, loads_batch
-from pyron.app import Pyron
+from pyron.app import Pyron, create_app
 from pyron.exceptions import HTTPException, ValidationException
 from pyron.params import Body, Cookie, Depends, Form, Header, Path, Query
 from pyron.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
@@ -62,6 +62,7 @@ __all__ = [
     "redirect",
     "SchemaRegistry",
     "ValidationException",
+    "create_app",
     "core_kind",
     "dumps",
     "dumps_batch",

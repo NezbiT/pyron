@@ -12,6 +12,7 @@ The bet is not RPS. FastAPI already wins “JSON API in an afternoon.” Django 
 | Shop name, phone, hours | You hardcode templates | sites / settings app | **Settings** in `/admin`; public header/footer read `site` |
 | API-only for months, panel later | N/A | Hard | `pyron enable admin` does not rewrite handlers |
 | SQL + Mongo + Redis | You wire it | SQL first | SQL default; Mongo documents; Redis cache |
+| See workers and reload the process | You add a process manager | One `runserver` process | [`pyron inspect`](inspector.md) (status, reload, scale, shutdown) |
 
 ## What is 2–3× easier
 

@@ -27,7 +27,7 @@ except ImportError:
 
 from pydantic import BaseModel, Field
 
-from pyron._bridge import CORE, Router, SchemaRegistry, dumps, loads
+from pyron._bridge import CORE, Router, SchemaRegistry, dumps, loads, prepare_request
 
 
 class BookIn(BaseModel):
@@ -156,6 +156,38 @@ def bench_serialize() -> dict[str, dict[str, float]]:
     return {"pyron_dumps": _stats(r, ITERS), "stdlib_json": _stats(p, ITERS)}
 
 
+def bench_prepare() -> dict[str, dict[str, float]]:
+    """Declared query/header parse: Rust `prepare_request` vs `urllib.parse`."""
+    from urllib.parse import parse_qsl
+
+    query = "q=hello+world&q=second&raw=a%20b&flag=&page=3"
+    headers = [
+        ("Host", "example.test"),
+        ("X-Request-Id", "abc"),
+        ("Accept", "application/json"),
+        ("X-Request-Id", "ignored"),
+    ]
+
+    def rust_run(n: int) -> None:
+        for _ in range(n):
+            prepare_request(query, headers)
+
+    def py_run(n: int) -> None:
+        for _ in range(n):
+            query_map: dict[str, str] = {}
+            for key, value in parse_qsl(query, keep_blank_values=True):
+                query_map.setdefault(key, value)
+            header_map: dict[str, str] = {}
+            for name, value in headers:
+                header_map.setdefault(name.lower(), value)
+
+    rust_run(WARMUP)
+    py_run(WARMUP)
+    rust = [_time(rust_run, ITERS) for _ in range(5)]
+    py = [_time(py_run, ITERS) for _ in range(5)]
+    return {"rust_prepare_request": _stats(rust, ITERS), "python_parse_qsl": _stats(py, ITERS)}
+
+
 def main() -> None:
     print(f"core={CORE}  iters={ITERS}  routes={N_ROUTES}")
     suites = {
@@ -163,6 +195,7 @@ def main() -> None:
         "validation": bench_validate(),
         "serialization": bench_serialize(),
         "request-shaped": bench_pipeline(),
+        "query-headers": bench_prepare(),
     }
     for name, rows in suites.items():
         print(f"\n== {name} ==")

@@ -63,6 +63,8 @@ Pyron is a hybrid web framework: **Python** for handlers and the product surface
 | Production checklist | [Security](security.md) |
 | Split the project into apps | [CLI `startapp`](cli.md#startapp) |
 | CLI reference | [CLI](cli.md) |
+| Hooks that are not middleware | [Signals](signals.md) |
+| Workers, reload, scale on a running app | [Inspector](inspector.md) |
 | What changed | [Changelog](changelog.md) |
 | How we keep docs in sync | [Contributing](contributing.md) |
 

@@ -28,6 +28,7 @@ FastAPI gets you `/docs` in minutes, then you assemble Jinja, forms, a CLI, and 
 - `pyron startapp` + `app.include_app(...)` for Django-shaped packages
 - Typer CLI, SQLModel + Alembic, optional Mongo documents + Redis cache, Granian (Uvicorn fallback)
 - `BackgroundTasks`, `app.url_for`, production checks: `pyron check --deploy`
+- Signals (`@app.signal` / `app.dispatch`), `pyron inspect` (workers, reload, scale), `Pyron(name=...)`, `request_class`, and `@app.websocket`
 
 ## Install
 
@@ -133,4 +134,4 @@ cargo test --lib
 
 ## Status
 
-v0.10.0. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs](https://nezbit.github.io/pyron/).
+v0.11.0. Alpha. MIT. See [CHANGELOG.md](CHANGELOG.md) · [docs](https://nezbit.github.io/pyron/).

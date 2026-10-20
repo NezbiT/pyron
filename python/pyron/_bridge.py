@@ -23,6 +23,7 @@ loads: Any
 dumps_batch: Any
 loads_batch: Any
 core_kind: Any
+prepare_request: Any
 CORE: str
 
 if not _FORCE_PURE:
@@ -39,6 +40,7 @@ if not _FORCE_PURE:
         dumps_batch = _ext.dumps_batch
         loads_batch = _ext.loads_batch
         core_kind = _ext.core_kind
+        prepare_request = getattr(_ext, "prepare_request", None)
         CORE = getattr(_ext, "CORE", "rust")
         _using_rust = True
     except Exception:
@@ -57,6 +59,10 @@ if not _using_rust:
         dumps_str,
         loads,
         loads_batch,
+        prepare_request,
     )
+
+if _using_rust and prepare_request is None:
+    from pyron._core_fallback import prepare_request
 
 USING_RUST = _using_rust

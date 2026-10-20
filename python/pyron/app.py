@@ -11,6 +11,9 @@ from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from pyron.inspector import Inspector
+from pyron.signals import Signals
+
 from pyron._bridge import Router, SchemaRegistry
 from pyron._version import __version__ as _PKG_VERSION
 from pyron.exceptions import HTTPException, ValidationException
@@ -27,12 +30,16 @@ Lifespan = Callable[["Pyron"], AbstractAsyncContextManager[None]]
 class Pyron:
     """A FastAPI-shaped ASGI app backed by the Pyron Rust core."""
 
+    _apps: dict[str, Pyron] = {}
+
     def __init__(
         self,
         title: str = "Pyron",
         version: str = _PKG_VERSION,
         description: str | None = None,
         *,
+        name: str | None = None,
+        request_class: type[Request] = Request,
         docs_url: str | None = "/docs",
         redoc_url: str | None = "/redoc",
         openapi_url: str | None = "/openapi.json",
@@ -51,8 +58,16 @@ class Pyron:
         settings: Any = None,
     ) -> None:
         self.title = title
+        self.name = name
         self.version = version
         self.description = description
+        self.request_class = request_class
+        self.signals = Signals()
+        self.inspector = Inspector()
+        self._websockets: list[tuple[str, Callable[..., Any]]] = []
+        self._loop: Any = None
+        if name:
+            self.register(name)
         self.docs_url = docs_url
         self.redoc_url = redoc_url
         self.openapi_url = openapi_url
@@ -302,6 +317,44 @@ class Pyron:
 
         return decorator
 
+    def register(self, name: str) -> Pyron:
+        """Put this app in the process registry. `Pyron.get_app(name)` returns it."""
+        current = type(self)._apps.get(name)
+        if current is not None and current is not self:
+            raise RuntimeError(f"A Pyron app is already registered as {name!r}")
+        self.name = name
+        type(self)._apps[name] = self
+        return self
+
+    @classmethod
+    def get_app(cls, name: str = "main") -> Pyron:
+        try:
+            return cls._apps[name]
+        except KeyError as exc:
+            raise LookupError(f"No Pyron app registered as {name!r}") from exc
+
+    def signal(self, name: str):
+        """Listen for a fine-grained event. This is not lifespan and not middleware."""
+
+        def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+            self.signals.on(name, fn)
+            return fn
+
+        return decorator
+
+    async def dispatch(self, name: str, **kwargs: Any) -> None:
+        """Fire a custom signal, for example `await app.dispatch("book.created", book=book)`."""
+        await self.signals.dispatch(name, **kwargs)
+
+    def websocket(self, path: str):
+        """Register a WebSocket handler. It is not part of the OpenAPI document."""
+
+        def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+            self._websockets.append((path, fn))
+            return fn
+
+        return decorator
+
     def on_event(self, event: str):
         handlers = getattr(self, f"_{event}_handlers", None)
         if handlers is None:
@@ -388,6 +441,9 @@ class Pyron:
         return app
 
     async def _app(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "websocket":
+            await self._handle_websocket(scope, receive, send)
+            return
         if scope["type"] != "http":
             return
         path = scope.get("path") or "/"
@@ -399,7 +455,7 @@ class Pyron:
                 child["root_path"] = (scope.get("root_path") or "") + mount_path
                 await mounted(child, receive, send)
                 return
-        request = Request(scope, receive)
+        request = self.request_class(scope, receive)
         try:
             response = await self._dispatch(request)
         except Exception as exc:
@@ -424,10 +480,16 @@ class Pyron:
             )
         route_id, path_params = found
         route = self._routes[route_id]
+        await self.signals.dispatch("http.handler.before", request=request, route=route)
+        await self.signals.dispatch("handler.before", request=request, route=route)
         kwargs = await self._bind(request, route, path_params)
         raw = await call_endpoint(route, kwargs)
         response = self._normalize(raw, route)
         _attach_background(route, kwargs, response)
+        await self.signals.dispatch(
+            "http.handler.after", request=request, response=response, route=route
+        )
+        await self.signals.dispatch("handler.after", request=request, response=response, route=route)
         return response
 
     async def _bind(self, request: Request, route: Route, path_params: dict[str, str]) -> dict[str, Any]:
@@ -476,7 +538,7 @@ class Pyron:
                     kwargs[slot.name] = _coerce(str(raw), slot.annotation)
                 continue
             if slot.source == "query":
-                raw = request.query_params.get(slot.alias)
+                raw = _prepared(request)["query"].get(slot.alias)
                 if raw is None:
                     if slot.required:
                         raise ValidationException(
@@ -487,7 +549,7 @@ class Pyron:
                     kwargs[slot.name] = _coerce(raw, slot.annotation)
                 continue
             if slot.source == "header":
-                raw = request.headers.get(slot.alias)
+                raw = _prepared(request)["headers"].get(str(slot.alias).lower())
                 if raw is None:
                     if slot.required:
                         raise ValidationException(
@@ -607,10 +669,14 @@ class Pyron:
             while True:
                 message = await receive()
                 if message["type"] == "lifespan.startup":
+                    import asyncio
+
+                    self._loop = asyncio.get_running_loop()
                     await self._startup()
                     if self._lifespan is not None:
                         self._lifespan_cm = self._lifespan(self)  # type: ignore[attr-defined]
                         await self._lifespan_cm.__aenter__()  # type: ignore[attr-defined]
+                    _start_inspector_client(self)
                     started = True
                     await send({"type": "lifespan.startup.complete"})
                 elif message["type"] == "lifespan.shutdown":
@@ -634,6 +700,182 @@ class Pyron:
             result = fn()
             if hasattr(result, "__await__"):
                 await result
+
+
+    async def _handle_websocket(self, scope: Scope, receive: Receive, send: Send) -> None:
+        from starlette.websockets import WebSocket
+
+        from pyron.websockets import PyronWebSocket
+
+        path = scope.get("path") or "/"
+        match = _match_ws(self._websockets, path)
+        if match is None:
+            await send({"type": "websocket.close", "code": 4404})
+            return
+        fn, params = match
+        request = self.request_class(scope, receive)
+        ws = PyronWebSocket(WebSocket(scope, receive, send))
+        kwargs = _ws_kwargs(fn, request, ws, params)
+        result = fn(**kwargs)
+        if hasattr(result, "__await__"):
+            await result
+
+
+def _prepared(request: Request) -> dict[str, dict[str, str]]:
+    cached = getattr(request.state, "_pyron_prepared", None)
+    if cached is not None:
+        return cached
+    from pyron._bridge import prepare_request
+
+    raw_query = request.scope.get("query_string") or b""
+    if isinstance(raw_query, bytes):
+        query = raw_query.decode("latin-1")
+    else:
+        query = str(raw_query)
+    headers: list[tuple[str, str]] = []
+    for key, value in request.scope.get("headers") or []:
+        if isinstance(key, bytes):
+            key = key.decode("latin-1")
+        if isinstance(value, bytes):
+            value = value.decode("latin-1")
+        headers.append((str(key), str(value)))
+    prepared = prepare_request(query, headers)
+    request.state._pyron_prepared = prepared
+    return prepared
+
+
+def _start_inspector_client(app: Pyron) -> None:
+    import os
+
+    addr = os.environ.get("PYRON_INSPECT_ADDR")
+    if not addr or app._loop is None:
+        return
+    import threading
+
+    threading.Thread(
+        target=_inspector_loop,
+        args=(app, addr, app._loop),
+        name="pyron-inspect-worker",
+        daemon=True,
+    ).start()
+
+
+def _inspector_loop(app: Pyron, addr: str, loop: Any) -> None:
+    import json
+    import os
+    import socket
+    import time
+
+    from pyron.inspector import _readline, _write
+
+    host, port_s = addr.rsplit(":", 1)
+    while True:
+        conn: socket.socket | None = None
+        try:
+            conn = socket.create_connection((host, int(port_s)), timeout=2)
+            conn.settimeout(None)
+            _write(
+                conn,
+                {
+                    "op": "hello",
+                    "pid": os.getpid(),
+                    "commands": sorted(app.inspector.commands),
+                },
+            )
+            if not _readline(conn):
+                raise OSError("inspector did not ack")
+            while True:
+                raw = _readline(conn)
+                if not raw:
+                    break
+                msg = json.loads(raw)
+                if msg.get("op") != "call":
+                    continue
+                _write(conn, _run_inspector_command(app, loop, str(msg.get("name") or ""), msg.get("payload") or {}))
+        except Exception:
+            time.sleep(0.3)
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except OSError:
+                    pass
+
+
+def _run_inspector_command(app: Pyron, loop: Any, name: str, payload: Any) -> dict[str, Any]:
+    import asyncio
+    import inspect
+
+    fn = app.inspector.commands.get(name)
+    if fn is None:
+        return {"ok": False, "error": f"unknown command {name!r}"}
+    if not isinstance(payload, dict):
+        payload = {}
+    kwargs = _accepted_payload(fn, payload)
+    try:
+        if inspect.iscoroutinefunction(fn):
+            value = asyncio.run_coroutine_threadsafe(fn(**kwargs), loop).result(timeout=30)
+        else:
+            value = fn(**kwargs)
+        json_ready = value if _jsonable(value) else str(value)
+        return {"ok": True, "result": json_ready}
+    except Exception as exc:  # noqa: BLE001 — the control client needs the message
+        return {"ok": False, "error": str(exc)}
+
+
+def _accepted_payload(fn: Callable[..., Any], payload: dict[str, Any]) -> dict[str, Any]:
+    import inspect
+
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return payload
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+        return payload
+    return {key: value for key, value in payload.items() if key in sig.parameters}
+
+
+def _jsonable(value: Any) -> bool:
+    return value is None or isinstance(value, (str, int, float, bool, list, dict))
+
+
+def _match_ws(
+    routes: list[tuple[str, Callable[..., Any]]], path: str
+) -> tuple[Callable[..., Any], dict[str, str]] | None:
+    parts = [p for p in path.split("/") if p]
+    for template, fn in routes:
+        tmpl = [p for p in template.split("/") if p]
+        if len(tmpl) != len(parts):
+            continue
+        params: dict[str, str] = {}
+        matched = True
+        for pattern, got in zip(tmpl, parts, strict=True):
+            if pattern.startswith("{") and pattern.endswith("}") and len(pattern) > 2:
+                params[pattern[1:-1]] = got
+            elif pattern != got:
+                matched = False
+                break
+        if matched:
+            return fn, params
+    return None
+
+
+def _ws_kwargs(fn: Callable[..., Any], request: Request, ws: Any, params: dict[str, str]) -> dict[str, Any]:
+    import inspect
+
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return {"request": request, "ws": ws}
+    kwargs: dict[str, Any] = {}
+    for name in sig.parameters:
+        if name in {"request", "req"}:
+            kwargs[name] = request
+        elif name in {"ws", "websocket"}:
+            kwargs[name] = ws
+        elif name in params:
+            kwargs[name] = params[name]
+    return kwargs
 
 
 def _attach_background(route: Route, kwargs: dict[str, Any], response: Response) -> None:

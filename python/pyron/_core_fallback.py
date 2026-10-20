@@ -18,6 +18,19 @@ def core_kind() -> str:
     return "python"
 
 
+def prepare_request(query: str, headers: list[tuple[str, str]]) -> dict[str, dict[str, str]]:
+    """Same shape as the Rust helper: first query value, first lowercased header."""
+    from urllib.parse import parse_qsl
+
+    query_map: dict[str, str] = {}
+    for key, value in parse_qsl(query, keep_blank_values=True):
+        query_map.setdefault(key, value)
+    header_map: dict[str, str] = {}
+    for name, value in headers:
+        header_map.setdefault(name.lower(), value)
+    return {"query": query_map, "headers": header_map}
+
+
 def dumps(obj: Any) -> bytes:
     return json.dumps(obj, default=_default, separators=(",", ":")).encode("utf-8")
 
