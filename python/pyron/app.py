@@ -713,7 +713,11 @@ class Pyron:
             await send({"type": "websocket.close", "code": 4404})
             return
         fn, params = match
-        request = self.request_class(scope, receive)
+        # Starlette's Request asserts an HTTP scope. Copy the scope so a
+        # custom request_class still sees path, headers, and query string.
+        request_scope = dict(scope)
+        request_scope["type"] = "http"
+        request = self.request_class(request_scope, receive)
         ws = PyronWebSocket(WebSocket(scope, receive, send))
         kwargs = _ws_kwargs(fn, request, ws, params)
         result = fn(**kwargs)

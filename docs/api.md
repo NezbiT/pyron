@@ -137,7 +137,7 @@ async def feed(request, ws):
         await ws.send(msg)
 ```
 
-`ws.send` accepts `str`, `bytes`, or a `dict` (sent as JSON). The socket is accepted on the first receive or send. Path parameters work: `@app.websocket("/rooms/{room}")` then `async def room(ws, room)`. WebSocket routes are not part of `/docs`.
+`ws.send` accepts `str`, `bytes`, or a `dict` (sent as JSON). The socket is accepted on the first receive or send. `request` exposes the path, headers, and query string. Path parameters work: `@app.websocket("/rooms/{room}")` then `async def room(ws, room)`. WebSocket routes are not part of `/docs`.
 
 ## Signals
 
