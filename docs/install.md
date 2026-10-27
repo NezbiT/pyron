@@ -33,7 +33,7 @@ Check the core:
 
 ```bash
 pyron version
-# pyron 0.10.0  core=rust  rust=True
+# pyron 0.11.0  core=rust  rust=True
 ```
 
 Without Rust, the same Python API works slower:

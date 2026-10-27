@@ -58,3 +58,24 @@ JSON body, and serialize a response.
 
 Do not claim an end-to-end "20× FastAPI" number. That is not what this
 architecture does.
+
+## Query and header parse (0.11.0)
+
+Captured with `python -c "from benchmarks.bench import bench_prepare"` after
+`maturin develop --release`. Machine: CPython 3.12.3, Linux x86_64, 2026-10-20.
+Median of 5 runs × 40 000 iterations. `core=rust`.
+
+Input: `q=hello+world&q=second&raw=a%20b&flag=&page=3` plus four headers
+(one duplicate name).
+
+```
+== query-headers ==
+  rust_prepare_request    1295 ns/op       772437 ops/s
+  python_parse_qsl        5095 ns/op       196275 ops/s
+```
+
+Rust `prepare_request` is **3.9×** the Python `urllib.parse.parse_qsl` path
+that `_core_fallback` still uses. Both keep the first value, decode `+` and
+`%HH`, and lowercase header names. Declared query and header parameters use
+this parse. Handlers that read `request.query_params` or `request.headers`
+still go through Starlette. The public handler signature did not change.

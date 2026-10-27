@@ -9,6 +9,7 @@
 mod jsonutil;
 mod method;
 mod openapi;
+mod request;
 mod router;
 mod serialize;
 mod validator;
@@ -338,6 +339,15 @@ fn core_kind() -> &'static str {
     "rust"
 }
 
+#[pyfunction]
+fn prepare_request<'py>(
+    py: Python<'py>,
+    query: &str,
+    headers: &Bound<'py, PyList>,
+) -> PyResult<Bound<'py, PyDict>> {
+    request::prepare_request(py, query, headers)
+}
+
 // ---------------------------------------------------------------------------
 // pymodule
 // ---------------------------------------------------------------------------
@@ -356,5 +366,6 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(dumps_batch, m)?)?;
     m.add_function(wrap_pyfunction!(loads_batch, m)?)?;
     m.add_function(wrap_pyfunction!(core_kind, m)?)?;
+    m.add_function(wrap_pyfunction!(prepare_request, m)?)?;
     Ok(())
 }

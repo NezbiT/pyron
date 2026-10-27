@@ -38,3 +38,7 @@ CMS **Pages** store Markdown (legacy HTML still allowed). Markdown is escaped fi
 Do **not** set `PYRON_TRUST_PROXY=1` unless a reverse proxy you control sets `X-Forwarded-For`. Otherwise clients can spoof the throttle key.
 
 `PYRON_SESSION_SECURE=1` on plain `http://127.0.0.1` will prevent the browser from storing the cookie. Use it behind HTTPS.
+
+## Inspector
+
+`pyron dev` and `pyron serve` open a control socket on `127.0.0.1` and write the address to `.pyron/inspect.json`. That file is gitignored. The socket is not an HTTP route and it is not bound to a public interface. `pyron inspect shutdown` stops the server that owns the file. Treat the app directory like any other local admin channel: do not copy `.pyron/inspect.json` to another machine.

@@ -98,3 +98,47 @@ async def delete_book(request, book_id: int):
 ```
 
 JSON clients get `401`. Browsers asking for HTML are sent to `/admin/login`.
+
+## Custom request
+
+Pass a Starlette `Request` subclass. Handlers receive that class wherever the parameter is the request.
+
+```python
+from starlette.requests import Request
+from pyron import Pyron
+
+class PyronRequest(Request):
+    @property
+    def user_id(self) -> str | None:
+        return getattr(self.state, "user_id", None)
+
+app = Pyron(request_class=PyronRequest)
+```
+
+## App registry
+
+An app joins the process registry only when you give it a name. `Pyron()` with no name stays anonymous, which is what tests want.
+
+```python
+def create_app():
+    return Pyron(name="main")
+
+app = Pyron.get_app("main")
+```
+
+`app.register("main")` does the same thing after construction. A second app that takes a name already in use raises `RuntimeError`. `Pyron.get_app("missing")` raises `LookupError`. `pyron.create_app(...)` is a thin wrapper around `Pyron(...)`.
+
+## WebSockets
+
+```python
+@app.websocket("/feed")
+async def feed(request, ws):
+    async for msg in ws:
+        await ws.send(msg)
+```
+
+`ws.send` accepts `str`, `bytes`, or a `dict` (sent as JSON). The socket is accepted on the first receive or send. `request` exposes the path, headers, and query string. Path parameters work: `@app.websocket("/rooms/{room}")` then `async def room(ws, room)`. WebSocket routes are not part of `/docs`.
+
+## Signals
+
+`@app.signal` and `await app.dispatch(...)` are named hooks. They are not lifespan and not middleware. See [Signals](signals.md).

@@ -4,6 +4,18 @@ How Pyron actually changed. Dates are when the tree moved, not a PyPI release.
 
 A user-facing change is unfinished until this file **and** the matching `docs/*.md` are updated in the same commit (plus README / scaffold copy when that surface is listed there). See `AGENTS.md` and [Contributing](contributing.md). HTML copy of this log: https://nezbit.github.io/pyron/changelog/
 
+## 0.11.0 — 2026-10-20
+
+Sanic-shaped operations on the same FastAPI-style app. HTTP routes stay in `/docs`. Signals, inspector commands, and WebSockets do not.
+
+- **Signals.** `@app.signal("http.handler.after")` and `@app.signal("book.created")`, plus `await app.dispatch(...)`. `handler.before` / `handler.after` fire with the `http.handler.*` names. Lifespan and middleware are unchanged. [Signals](signals.md).
+- **Inspector.** `pyron inspect` shows version, workers, PIDs, and uptime. `reload`, `scale N`, and `shutdown` talk to the parent process. `@app.inspector.command(...)` runs inside a worker. The socket is `127.0.0.1`. State lives in `.pyron/inspect.json`. [Inspector](inspector.md), [CLI](cli.md#inspect), [Security](security.md#inspector).
+- **Worker manager.** `pyron dev` (one worker, reload on) and `pyron serve` (N workers, reload off) share that parent. Scale and reload restart the HTTP child. [Architecture](architecture.md#request-path).
+- **Lighter query and header binding.** Declared query and header parameters are parsed in Rust (`prepare_request`: form-decoding, first value, lowercased headers). Handlers still receive a normal request. Numbers are in `benchmarks/results.md`.
+- **WebSockets.** `@app.websocket("/feed")` with `async for msg in ws` / `await ws.send(...)`. Not part of OpenAPI. [API](api.md#websockets).
+- **Custom request class.** `Pyron(request_class=PyronRequest)`. [API](api.md#custom-request).
+- **App registry.** `Pyron(name="main")` or `app.register("main")`, then `Pyron.get_app("main")`. Unnamed apps stay out of the registry. [API](api.md#app-registry).
+
 ## 0.10.0 — 2026-08-21
 
 Small polish before calling this a 0.10.

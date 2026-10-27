@@ -98,6 +98,8 @@ nav:
       - Enable later: enable.md
   - Build:
       - API: api.md
+      - Signals: signals.md
+      - Inspector: inspector.md
       - Admin panel: admin.md
       - Auth: auth.md
       - Data (SQL, Mongo, Redis): data.md

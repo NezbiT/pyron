@@ -19,10 +19,14 @@
 3. Admin session → `request.state.user` (if the panel is enabled)
 4. Mounts (`/admin/assets`, `/static`)
 5. Rust router → `route_id`
-6. Rust schema on the body bytes (if a Pydantic body is declared)
-7. Bind path/query/header/cookie/`BackgroundTasks`
-8. Python handler
-9. Rust `dumps` for JSON (or Jinja2 for HTML)
+6. Signals `http.handler.before` and `handler.before` (only when a route matched)
+7. Bind path / cookie / form / `BackgroundTasks`. Declared query and header values come from Rust `prepare_request` (form-decoded query, first value wins, header names lowercased). The handler still receives a normal request object.
+8. Rust schema on the body bytes (if a Pydantic body is declared)
+9. Python handler
+10. Signals `http.handler.after` and `handler.after`
+11. Rust `dumps` for JSON (or Jinja2 for HTML)
+
+`pyron dev` and `pyron serve` start a parent process first. The parent owns `pyron inspect` (loopback TCP, state in `.pyron/inspect.json`) and spawns the Granian or Uvicorn child. WebSocket routes are matched in Python and are not in the Rust router or OpenAPI.
 
 FFI rules: compile schemas and routes once; batch when you can; borrow `bytes`/`str`; release the GIL around validate.
 
@@ -32,7 +36,11 @@ Without a compiled extension (`PYRON_PURE_PYTHON=1`) a Python fallback loads. Ca
 
 | Module | Role |
 |---|---|
-| `app.py` | ASGI app, routing table, middleware stack |
+| `app.py` | ASGI app, routing table, middleware stack, signals dispatch |
+| `signals.py` | Named listeners. Not lifespan, not middleware |
+| `inspector.py` | Loopback control socket and custom commands |
+| `workers.py` | Parent for `pyron dev` / `pyron serve` |
+| `websockets.py` | Small wrapper over Starlette WebSocket |
 | `routing.py` | `APIRouter`, signature compile |
 | `store.py` | Desk storage protocol (SQL / Mongo / memory) |
 | `document.py` | Pydantic `Document` for Mongo |
@@ -50,7 +58,7 @@ Without a compiled extension (`PYRON_PURE_PYTHON=1`) a Python fallback loads. Ca
 | `_bridge.py` | Load `pyron._core` or `_core_fallback` |
 | `_version.py` | Package version |
 
-Rust crate: `src/` (`router`, `validator`, `serialize`, `openapi`). Version of the extension is independent; the product version is `_version.py`.
+Rust crate: `src/` (`router`, `validator`, `serialize`, `openapi`, `request`). Version of the extension is independent; the product version is `_version.py`. Query and header binding uses `prepare_request` in that module. Without the symbol, `_bridge.py` calls the Python fallback.
 
 ## Data
 

@@ -43,6 +43,46 @@ def run(
     """
     root = ensure_import_path(app_dir)
     target = app if isinstance(app, str) else _object_to_target(app)
+    # The HTTP child must not start another supervisor.
+    if os.environ.get("PYRON_WORKER") == "1":
+        serve_blocking(
+            target,
+            host=host,
+            port=port,
+            reload=reload,
+            workers=workers,
+            interface=interface,
+            log_level=log_level,
+            app_dir=root,
+        )
+        return
+    from pyron.workers import supervise
+
+    supervise(
+        target,
+        host=host,
+        port=port,
+        workers=workers,
+        reload=reload,
+        app_dir=root,
+        log_level=log_level,
+    )
+
+
+def serve_blocking(
+    app: str | Any,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    reload: bool = False,
+    workers: int = 1,
+    interface: str = "asgi",
+    log_level: str = "info",
+    app_dir: str | None = None,
+) -> None:
+    """Run Granian or Uvicorn in this process. Used by the worker child."""
+    root = ensure_import_path(app_dir)
+    target = app if isinstance(app, str) else _object_to_target(app)
     if _try_granian(target, host, port, reload, workers, interface, log_level, root):
         return
     _try_uvicorn(target, host, port, reload, workers, log_level, root)

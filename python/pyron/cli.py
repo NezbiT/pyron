@@ -1,4 +1,4 @@
-"""Typer CLI: init, startapp, enable, check, dev, serve, db, createsuperuser."""
+"""Typer CLI: init, startapp, enable, check, dev, serve, inspect, db, createsuperuser."""
 
 from __future__ import annotations
 
@@ -137,6 +137,7 @@ def dev(
     console.print(f"  http://{host}:{port}/admin")
     console.print(f"  http://{host}:{port}/p/about")
     console.print(f"  http://{host}:{port}/admin/settings")
+    console.print("  pyron inspect")
     from pyron.server import run
 
     run(
@@ -172,6 +173,107 @@ def serve(
         workers=workers,
         app_dir=str(app_dir.resolve()) if app_dir else None,
     )
+
+
+inspect_app = typer.Typer(help="Talk to a running `pyron dev` or `pyron serve`.")
+app.add_typer(inspect_app, name="inspect")
+
+
+def _inspect_dir(app_dir: Optional[Path]) -> Optional[str]:
+    return str(app_dir.resolve()) if app_dir else None
+
+
+def _inspect_ask(app_dir: Optional[str], payload: dict) -> dict:
+    from pyron.workers import request
+
+    try:
+        reply = request(app_dir, payload)
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+    except OSError as exc:
+        console.print(f"[red]Could not reach the inspector: {exc}[/red]")
+        raise typer.Exit(1) from exc
+    if not reply.get("ok"):
+        console.print(f"[red]{reply.get('error') or reply}[/red]")
+        raise typer.Exit(1)
+    return reply
+
+
+def _print_status(result: dict) -> None:
+    table = Table(title="pyron inspect", show_header=False, box=None)
+    pids = ", ".join(str(pid) for pid in result.get("worker_pids") or []) or "—"
+    commands = ", ".join(result.get("commands") or []) or "—"
+    table.add_row("version", str(result.get("version")))
+    table.add_row("supervisor", str(result.get("pid")))
+    table.add_row("server", str(result.get("server_pid")))
+    table.add_row("workers", str(result.get("workers")))
+    table.add_row("worker pids", pids)
+    table.add_row("uptime", f"{result.get('uptime_s')}s")
+    table.add_row("commands", commands)
+    console.print(table)
+
+
+@inspect_app.callback(invoke_without_command=True)
+def inspect_status(
+    ctx: typer.Context,
+    app_dir: Optional[Path] = typer.Option(
+        None,
+        "--app-dir",
+        help="Directory that contains `.pyron/inspect.json`. Defaults to the current directory.",
+    ),
+) -> None:
+    """Show workers, PIDs, uptime, and version for a running app."""
+    ctx.obj = _inspect_dir(app_dir)
+    if ctx.invoked_subcommand is not None:
+        return
+    reply = _inspect_ask(ctx.obj, {"op": "status"})
+    _print_status(reply["result"])
+
+
+@inspect_app.command("reload")
+def inspect_reload(ctx: typer.Context) -> None:
+    """Restart the HTTP server child."""
+    reply = _inspect_ask(ctx.obj, {"op": "reload"})
+    console.print(reply["result"])
+
+
+@inspect_app.command("scale")
+def inspect_scale(
+    ctx: typer.Context,
+    workers: int = typer.Argument(..., help="Worker count to restart with."),
+) -> None:
+    """Restart the server with N workers."""
+    if workers < 1:
+        raise typer.BadParameter("workers must be >= 1")
+    reply = _inspect_ask(ctx.obj, {"op": "scale", "workers": workers})
+    console.print(reply["result"])
+
+
+@inspect_app.command("shutdown")
+def inspect_shutdown(ctx: typer.Context) -> None:
+    """Stop the server and the inspector."""
+    reply = _inspect_ask(ctx.obj, {"op": "shutdown"})
+    console.print(reply["result"])
+
+
+@inspect_app.command("call")
+def inspect_call(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Custom `@app.inspector.command` name."),
+    payload: str = typer.Option("{}", "--json", help="JSON object passed as keyword arguments."),
+) -> None:
+    """Run a custom command inside a worker."""
+    import json
+
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"--json must be an object: {exc}") from exc
+    if not isinstance(data, dict):
+        raise typer.BadParameter("--json must be an object")
+    reply = _inspect_ask(ctx.obj, {"op": "call", "name": name, "payload": data})
+    console.print(reply.get("result"))
 
 
 @app.command()
